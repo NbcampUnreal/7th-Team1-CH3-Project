@@ -37,6 +37,6 @@ protected:
 	// 입력 처리 함수
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	void StartJump(const FInputActionValue& Value);
+	void StartJump (const FInputActionValue& Value);
 	void StopJump(const FInputActionValue& Value);
 };
