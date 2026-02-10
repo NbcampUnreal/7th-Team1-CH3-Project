@@ -27,33 +27,3 @@ void AHJ_Player::BeginPlay()
 {
 	Super::BeginPlay();
 }
-
-void AHJ_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAxis("MoveForward", this, &AHJ_Player::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AHJ_Player::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &AHJ_Player::Turn);
-	PlayerInputComponent->BindAxis("LookUp", this, &AHJ_Player::LookUp);
-}
-
-void AHJ_Player::MoveForward(float Value)
-{
-	AddMovementInput(GetActorForwardVector(), Value);
-}
-
-void AHJ_Player::MoveRight(float Value)
-{
-	AddMovementInput(GetActorRightVector(), Value);
-}
-
-void AHJ_Player::Turn(float Value)
-{
-	AddControllerYawInput(Value);
-}
-
-void AHJ_Player::LookUp(float Value)
-{
-	AddControllerPitchInput(Value);
-}
