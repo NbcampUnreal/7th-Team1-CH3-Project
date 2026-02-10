@@ -1,18 +1,20 @@
 ﻿#include "HJ_GameMode.h"
 #include "HJ_GameState.h"
 #include "HJ_Player.h"
+#include "HJ_PlayerController.h"
 #include "TimerManager.h"
 
 AHJ_GameMode::AHJ_GameMode()
 {
-	// 🔥 중요: GameState & Pawn 연결
 	GameStateClass = AHJ_GameState::StaticClass();
 	DefaultPawnClass = AHJ_Player::StaticClass();
+	PlayerControllerClass = AHJ_PlayerController::StaticClass();
 
 	BaseZombieCount = 5;
 	TimeBetweenWaves = 5.f;
 	ZombiesAlive = 0;
 }
+
 
 void AHJ_GameMode::BeginPlay()
 {
