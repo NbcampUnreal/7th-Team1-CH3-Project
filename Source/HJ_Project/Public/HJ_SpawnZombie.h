@@ -2,9 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ZombieSpawnRow.h"
 #include "HJ_SpawnZombie.generated.h"
 
 class UBoxComponent;
+class UDataTable;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_SpawnZombie : public AActor
@@ -14,27 +16,29 @@ class HJ_PROJECT_API AHJ_SpawnZombie : public AActor
 public:
 	AHJ_SpawnZombie();
 
-	// GameMode에서 호출
-	void SpawnZombies(int32 Count);
-
-	UFUNCTION(BlueprintCallable)
-	void SpawnItem(TSubclassOf<AActor> ItemClass);
-	void SpawnZombies(int32 Count, TSubclassOf<AActor> SelectedZombieClass = nullptr);
-
-protected:
 	virtual void BeginPlay() override;
 
-	// 스폰 영역
+	// 웨이브 시작
+	void StartWave(int32 WaveNumber);
+
+	// 다음 웨이브
+	void NextWave();
+
+protected:
+
 	UPROPERTY(VisibleAnywhere, Category = "Spawn")
 	UBoxComponent* SpawnBox;
-
-	// 스폰할 좀비 클래스
-	UPROPERTY(EditAnywhere, Category = "Spawn")
-	TSubclassOf<AActor> ZombieClass;
 
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	UDataTable* WaveDataTable;
 
 private:
+
+	int32 CurrentWave;
+
+	FTimerHandle WaveTimer;
+
+	FZombieSpawnRow* FindWave(int32 WaveNumber);
+
 	FVector GetRandomPointInBox() const;
 };
