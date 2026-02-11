@@ -30,4 +30,6 @@ public:
 	//목표가 죽으면 정지 할수 있는 타이머 핸들
 	FTimerHandle ChaseTimerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "AI")
+	float chaseInterval;
 };

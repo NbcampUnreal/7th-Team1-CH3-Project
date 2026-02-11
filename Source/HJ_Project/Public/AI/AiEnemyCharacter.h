@@ -19,6 +19,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	//플레이어와 닿았을때 피해입기
+	UFUNCTION()
 	void OnEnemyoverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,

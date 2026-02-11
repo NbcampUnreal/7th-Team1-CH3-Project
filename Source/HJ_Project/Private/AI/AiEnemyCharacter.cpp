@@ -49,42 +49,25 @@ void AAiEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//실시간 추격
-	if (TargetActor)
-	{
-		AAIController* EnemyController = Cast<AAIController>(GetController());
-
-		if (EnemyController)
-		{
-			//플레이어에게 어디까지 다가갈지
-			EnemyController->MoveToActor(TargetActor, 50.0f);//50cm미터정도까지만 다가가
-		}
-	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-void AAiEnemyCharacter::OnEnemyoverlap(UPrimitiveComponent* OverlappedComponent, 
-	AActor* OtherActor, 
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep,
-	const FHitResult& SweepResult)
+void AAiEnemyCharacter::OnEnemyoverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!OtherActor) return;
 	if (OtherActor == this) return;
+	if (OtherActor->ActorHasTag(TEXT("Player")))
+	{
 
-	
-	
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("적: 플레이어와 충돌함!"));
+		}
+
+
+		UE_LOG(LogTemp, Warning, TEXT("Enemy Overlapped with Player!"));
+
+		UGameplayStatics::ApplyDamage(OtherActor, 5.0f, GetController(), this, nullptr);
+
+	}
 }
 

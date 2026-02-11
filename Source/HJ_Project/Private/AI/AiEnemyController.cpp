@@ -4,10 +4,11 @@
 #include "AI/AiEnemyController.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
+#include "GameFramework/Pawn.h"
+#include "TimerManager.h"
 
 AAiEnemyController::AAiEnemyController()
 {
-
 
 	bSetControlRotationFromPawnOrientation = true;
 }
@@ -16,9 +17,15 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	//0번 플레이어 컨트롤러의 캐릭터를 찾음
-	TargetPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	
+
+	if (GetWorld())
+	{
+
+
+		//0번 플레이어 컨트롤러의 캐릭터를 찾음
+		TargetPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	}
+
 	//플레이어존재시에 0.5초마다 경로 갱신
 	if (TargetPlayer)
 	{
