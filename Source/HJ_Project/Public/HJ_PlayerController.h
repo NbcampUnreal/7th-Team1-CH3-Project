@@ -33,10 +33,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* LookAction;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* FireAction;
 
 	// 입력 처리 함수
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StartJump (const FInputActionValue& Value);
 	void StopJump(const FInputActionValue& Value);
+	void StartFire(const FInputActionValue& Value);
+	void StopFire(const FInputActionValue& Value);
 };

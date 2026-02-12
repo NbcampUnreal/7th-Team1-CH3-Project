@@ -1,5 +1,6 @@
 ﻿#include "HJ_Player.h"
 #include "Camera/CameraComponent.h"
+#include "EquipWeaponMaster.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -26,4 +27,12 @@ AHJ_Player::AHJ_Player()
 void AHJ_Player::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AHJ_Player::StartFire()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Fire();
+	}
 }
