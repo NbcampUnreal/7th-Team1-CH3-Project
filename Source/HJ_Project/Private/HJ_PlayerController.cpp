@@ -52,6 +52,13 @@ void AHJ_PlayerController::SetupInputComponent()
 			EI->BindAction(JumpAction, ETriggerEvent::Completed,
 				this, &AHJ_PlayerController::StopJump);
 		}
+		if (FireAction)
+		{
+			EI->BindAction(FireAction, ETriggerEvent::Started, 
+				this, &AHJ_PlayerController::StartFire);
+			EI->BindAction(FireAction, ETriggerEvent::Completed, 
+				this, &AHJ_PlayerController::StopFire);
+		}
 	}
 }
 
@@ -98,4 +105,16 @@ void AHJ_PlayerController::StopJump(const FInputActionValue& Value)
 	{
 		HJPlayer->StopJumping();
 	}
+}
+
+void AHJ_PlayerController::StartFire(const FInputActionValue& Value)
+{
+	AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
+	if (!MyPlayer) return;
+
+	MyPlayer->StartFire();
+}
+
+void AHJ_PlayerController::StopFire(const FInputActionValue& Value)
+{
 }
