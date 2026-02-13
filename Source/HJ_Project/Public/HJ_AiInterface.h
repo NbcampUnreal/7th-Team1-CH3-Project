@@ -15,5 +15,6 @@ class HJ_PROJECT_API IHJ_AIInterface
 	GENERATED_BODY()
 
 public:
-	virtual void NotifyDeath() = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void NotifyDeath();
 };
