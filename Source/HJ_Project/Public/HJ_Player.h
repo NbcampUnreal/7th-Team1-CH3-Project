@@ -6,7 +6,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
-class AEquipWeaponMaster;   // 🔥 이거 있어야 함
+class AEquipWeaponMaster;  
 
 UCLASS()
 class HJ_PROJECT_API AHJ_Player : public ACharacter
@@ -16,7 +16,7 @@ class HJ_PROJECT_API AHJ_Player : public ACharacter
 public:
     AHJ_Player();
 
-    void StartFire();   // 🔥 public 인지 확인
+    void StartFire(); 
 
 protected:
     virtual void BeginPlay() override;
@@ -28,5 +28,8 @@ protected:
     UCameraComponent* FollowCamera;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-    AEquipWeaponMaster* CurrentWeapon;   // 🔥 타입 확인
+    AEquipWeaponMaster* CurrentWeapon;  
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AEquipWeaponMaster> WeaponClass;
 };
