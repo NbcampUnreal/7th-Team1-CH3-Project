@@ -6,6 +6,7 @@
 #include "GameFramework/Controller.h"
 #include "Engine/DamageEvents.h"
 
+
 AHJ_Player::AHJ_Player()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -21,6 +22,9 @@ AHJ_Player::AHJ_Player()
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+
+
 
 	//HP초기값
 	MaxHP = 100.0f;
