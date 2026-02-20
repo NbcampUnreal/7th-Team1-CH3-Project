@@ -1,4 +1,4 @@
-#include "HJ_Player.h"
+﻿#include "HJ_Player.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -10,19 +10,31 @@ AHJ_Player::AHJ_Player()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	// 카메라 컴포넌트
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.f;
-	CameraBoom->bUsePawnControlRotation = true;
 
+	// 카메라 위치 조정
+	CameraBoom->TargetArmLength = 420.f;
+	CameraBoom->SocketOffset = FVector(0.f, 55.f, 70.f);
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bDoCollisionTest = true;
+	CameraBoom->ProbeSize = 12.f;
+
+	// 카메라 회전
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 12.f;
+
+	// FollowCamera 설정
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	// 캐릭터 회전 설정
+	bUseControllerRotationYaw = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
 
-	//HP초기값
 	MaxHP = 100.0f;
 	CurrentHP = MaxHP;
 }
@@ -30,38 +42,43 @@ AHJ_Player::AHJ_Player()
 void AHJ_Player::BeginPlay()
 {
 	Super::BeginPlay();
+
 	if (WeaponClass)
 	{
 		CurrentWeapon = GetWorld()->SpawnActor<AEquipWeaponMaster>(WeaponClass);
-		CurrentWeapon->AttachToComponent(GetMesh(),
-			FAttachmentTransformRules::SnapToTargetIncludingScale,
-			TEXT("hand_rSocket"));
-
-		CurrentWeapon->SetOwner(this);
+		if (CurrentWeapon)
+		{
+			CurrentWeapon->AttachToComponent(
+				GetMesh(),
+				FAttachmentTransformRules::SnapToTargetIncludingScale,
+				TEXT("hand_rSocket")
+			);
+			CurrentWeapon->SetOwner(this);
+		}
 	}
 }
 
-//데메지 정의
+void AHJ_Player::SetAimMode(bool bAim)
+{
+	bIsAiming = bAim;
+}
+
 float AHJ_Player::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float ActualDamage = Super::TakeDamage(DamageAmount,
-		DamageEvent,
-		EventInstigator,
-		DamageCauser);
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	if (ActualDamage > 0.0f)
 	{
-		//체력감소
 		CurrentHP = FMath::Clamp(CurrentHP - ActualDamage, 0.0f, MaxHP);
-		//로그표시임
+
 		UE_LOG(LogTemp, Warning, TEXT("HP: %f"), CurrentHP);
 
 		if (CurrentHP <= 0.0f)
 		{
-			//0이되면 게임오버 로그
 			UE_LOG(LogTemp, Warning, TEXT("YOU DIE YANG!"));
 		}
 	}
+
 	return ActualDamage;
 }
 
