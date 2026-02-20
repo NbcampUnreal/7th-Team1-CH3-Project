@@ -6,7 +6,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
-class AEquipWeaponMaster;   // 🔥 이거 있어야 함
+class AEquipWeaponMaster;  
 
 UCLASS()
 class HJ_PROJECT_API AHJ_Player : public ACharacter
@@ -16,7 +16,7 @@ class HJ_PROJECT_API AHJ_Player : public ACharacter
 public:
     AHJ_Player();
 
-    void StartFire();   // 🔥 public 인지 확인
+    void StartFire(); 
 
 protected:
     virtual void BeginPlay() override;
@@ -30,7 +30,6 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
     AEquipWeaponMaster* CurrentWeapon;   // 🔥 타입 확인
 
-
     //체력 시스템(블루프린트에서 수정가능)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHP;
@@ -38,6 +37,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float CurrentHP;
 
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AEquipWeaponMaster> WeaponClass;
+    
 public:
     virtual float TakeDamage(float DamageAmount,
         struct FDamageEvent const& DamageEvent,
