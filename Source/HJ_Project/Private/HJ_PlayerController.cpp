@@ -109,20 +109,17 @@ void AHJ_PlayerController::StopJump(const FInputActionValue& Value)
 
 void AHJ_PlayerController::StartFire()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Controller Fire"));
+	AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
+	if (!MyPlayer) return;
 
-	AHJ_Player* MnPlayer = Cast<AHJ_Player>(GetPawn());
-	if (MnPlayer)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Player OK"));
-		MnPlayer->StartFire();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Pawn Cast Failed"));
-	}
+	MyPlayer->SetAimMode(true);
+	MyPlayer->StartFire();
 }
 
 void AHJ_PlayerController::StopFire()
 {
+	AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
+	if (!MyPlayer) return;
+
+	MyPlayer->SetAimMode(false);
 }
