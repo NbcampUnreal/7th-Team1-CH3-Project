@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -17,6 +17,8 @@ public:
     AHJ_Player();
 
     void StartFire(); 
+
+    void SetAimMode(bool bAim);
 
 protected:
     virtual void BeginPlay() override;
@@ -39,6 +41,9 @@ protected:
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<AEquipWeaponMaster> WeaponClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+    bool bIsAiming = false;
     
 public:
     virtual float TakeDamage(float DamageAmount,
