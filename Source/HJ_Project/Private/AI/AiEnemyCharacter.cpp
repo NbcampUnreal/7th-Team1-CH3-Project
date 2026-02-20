@@ -3,7 +3,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "HJ_Player.h"//02/20----10시48분 추가
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 
 
 //캐릭터
@@ -15,6 +17,24 @@ AAiEnemyCharacter::AAiEnemyCharacter()
 	Health = 100.0f;
 	StunDuration = 1.0f;
 
+	//공격 시간 간격
+	AttackInterval = 1.0f;
+
+	//어택 스피어
+	AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackS[here"));
+	AttackSphere->SetupAttachment(RootComponent);
+	AttackSphere->SetSphereRadius(150.f);
+
+	AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	AttackSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	AttackSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	//캡슐컴포넌트 막아두는거 유지
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
 	//AI컨트롤러 자동으로 빙의
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
@@ -25,6 +45,7 @@ AAiEnemyCharacter::AAiEnemyCharacter()
 void AAiEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
 
 	//이동속도
 	GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
@@ -43,6 +64,15 @@ void AAiEnemyCharacter::BeginPlay()
 		);
 	}
 
+	//스피어 오버랩 
+	AttackSphere->OnComponentBeginOverlap.AddDynamic(
+		this,
+		&AAiEnemyCharacter::OnEnemyoverlap);
+
+	AttackSphere->OnComponentEndOverlap.AddDynamic(
+		this,
+		&AAiEnemyCharacter::OnEnemyEndOverlap);
+
 	//시작할 떄 플레이어를 타겟으로 지정
 	TargetActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 }
@@ -59,29 +89,60 @@ void AAiEnemyCharacter::Tick(float DeltaTime)
 
 
 //오버랩
-void AAiEnemyCharacter::OnEnemyoverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AAiEnemyCharacter::OnEnemyoverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
 {
-	if (OtherActor == this) return;
-	if (OtherActor->ActorHasTag(TEXT("Player")))
+	AHJ_Player* Player = Cast<AHJ_Player>(OtherActor);
+
+	if (Player)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("공격 시작"));
 
-		if (GEngine)
-		{
-			//디버드 메세지 테스트끝나면 지워도됨
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, TEXT("적: 플레이어와 충돌함!"));
-		}
+		OverlappingPlayer = Player; 
 
-		//삭제 가능
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Overlapped with Player!"));
+		GetWorldTimerManager().SetTimer(
+			DamageTimerHandle,
+			this,
+			&AAiEnemyCharacter::ApplyDamage,
+			AttackInterval,
+			true);
+	}
+}
 
-		UGameplayStatics::ApplyDamage(OtherActor,
+//범위 벗어나면 데미지 중단!
+void AAiEnemyCharacter::OnEnemyEndOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	if (OtherActor == OverlappingPlayer)
+	{
+		OverlappingPlayer = nullptr;
+		GetWorldTimerManager().ClearTimer(DamageTimerHandle);
+	}
+}
+
+
+void AAiEnemyCharacter::ApplyDamage()
+{
+	if (OverlappingPlayer)
+	{
+		UGameplayStatics::ApplyDamage(
+			OverlappingPlayer,
 			AttackDamage,
 			GetController(),
 			this,
 			nullptr);
-
 	}
 }
+
+
 
 
 

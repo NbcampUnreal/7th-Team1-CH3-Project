@@ -6,6 +6,7 @@
 #include "GameFramework/Controller.h"
 #include "Engine/DamageEvents.h"
 
+
 AHJ_Player::AHJ_Player()
 {
 	PrimaryActorTick.bCanEverTick = false;
