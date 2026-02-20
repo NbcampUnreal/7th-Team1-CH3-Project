@@ -1,27 +1,27 @@
 ﻿#include "EquipWeaponMaster.h"
+
 #include "Components/SceneComponent.h"
 #include "Components/ArrowComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/DamageType.h"
 #include "DrawDebugHelpers.h"
-#include "HJ_AiInterface.h"
-#include "Components/SceneComponent.h"
-#include "Components/ArrowComponent.h"
-#include "Engine/Engine.h"
 
 AEquipWeaponMaster::AEquipWeaponMaster()
 {
-    PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = false;
+
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
+
 	Muzzle = CreateDefaultSubobject<UArrowComponent>(TEXT("Muzzle"));
-	Muzzle->SetupAttachment(Root);
+	Muzzle->SetupAttachment(RootComponent);
 }
 
 FVector AEquipWeaponMaster::GetMuzzleLocation() const
 {
-	if (Muzzle) return Muzzle->GetComponentLocation();
-
-	return GetActorLocation();
+	return Muzzle ? Muzzle->GetComponentLocation() : GetActorLocation();
 }
 
 void AEquipWeaponMaster::Fire()
@@ -29,9 +29,6 @@ void AEquipWeaponMaster::Fire()
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC) return;
 
-	// =========================
-	// 1) 카메라 기준 조준점(AimPoint) 구하기
-	// =========================
 	FVector CamLoc;
 	FRotator CamRot;
 	PC->GetPlayerViewPoint(CamLoc, CamRot);
@@ -48,9 +45,6 @@ void AEquipWeaponMaster::Fire()
 
 	const FVector AimPoint = bCamHit ? CamHit.ImpactPoint : CamEnd;
 
-	// =========================
-	// 2) 총구에서 AimPoint 방향으로 실제 발사(2단 트레이스)
-	// =========================
 	const FVector MuzzleLoc = GetMuzzleLocation();
 	const FVector ShotDir = (AimPoint - MuzzleLoc).GetSafeNormal();
 	const FVector ShotEnd = MuzzleLoc + (ShotDir * TraceDistance);
@@ -63,9 +57,6 @@ void AEquipWeaponMaster::Fire()
 	const bool bShotHit = GetWorld()->LineTraceSingleByChannel(
 		ShotHit, MuzzleLoc, ShotEnd, ECC_Visibility, ShotParams);
 
-	// =========================
-	// Debug
-	// =========================
 	if (bDrawDebug)
 	{
 		if (bDrawCameraDebug)
@@ -80,16 +71,31 @@ void AEquipWeaponMaster::Fire()
 		}
 	}
 
-	// =========================
-	// 3) 히트 처리 (현재는 즉사 NotifyDeath)
-	// =========================
-	if (bShotHit)
+	if (!bShotHit) return;
+
+	AActor* HitActor = ShotHit.GetActor();
+	if (!HitActor) return;
+
+	// ✅ BP에서 CurrentDamage를 세팅 안 했으면 데미지 0이라 아무 일도 안 하게 처리
+	if (CurrentDamage <= 0.f)
 	{
-		AActor* HitActor = ShotHit.GetActor();
-		if (HitActor && HitActor->GetClass()->ImplementsInterface(UHJ_AIInterface::StaticClass()))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Zombie Hit: %s"), *HitActor->GetName());
-			IHJ_AIInterface::Execute_NotifyDeath(HitActor);
-		}
+		UE_LOG(LogTemp, Warning, TEXT("[Weapon] CurrentDamage is 0. Set it from DT_Weapon in BP."));
+		return;
 	}
+
+	AController* InstigatorController = nullptr;
+	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
+	{
+		InstigatorController = OwnerPawn->GetController();
+	}
+
+	UGameplayStatics::ApplyPointDamage(
+		HitActor,
+		CurrentDamage,
+		ShotDir,
+		ShotHit,
+		InstigatorController,
+		this,
+		UDamageType::StaticClass()
+	);
 }

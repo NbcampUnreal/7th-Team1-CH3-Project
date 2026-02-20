@@ -19,16 +19,18 @@ public:
 	virtual void Fire();
 
 protected:
-	// 루트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* Root;
 
-	// 총구(화살표 컴포넌트) - BP에서 위치를 총구로 옮기면 정확해짐
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UArrowComponent* Muzzle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	float TraceDistance = 10000.f;
+
+	// ✅ DT_Weapon(블루프린트)에서 읽어온 데미지를 BP가 이 변수에 넣어줌
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Stat")
+	float CurrentDamage = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bDrawDebug = true;
