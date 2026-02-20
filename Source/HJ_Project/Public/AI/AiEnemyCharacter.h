@@ -26,10 +26,21 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex,
 		bool bFromSweep,
-		const FHitResult& SweepResult
-	);
+		const FHitResult& SweepResult);
+
+		//ai가 데메지 받았을때 실행
+		virtual float TakeDamage(float DamageAmount, 
+			struct FDamageEvent const& DamageEvent, 
+			class AController* EventInstigator, 
+			AActor* DamageCauser) override;
+	
 
 public:
+	//체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnemyStat")
+	float Health = 100.0;
+
+
 	//이동 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnemyStat")
 	float MoveSpeed;
@@ -41,4 +52,14 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "EnemyStat")
 	class AActor* TargetActor;
+
+	//경직시간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI Setting")
+	float StunDuration = 1.0f;
+	
+	//경직초기화
+	void ResetStun();
+
+	//경직 계산용 타이머 핸들
+	FTimerHandle StunTimerHandle;
 };

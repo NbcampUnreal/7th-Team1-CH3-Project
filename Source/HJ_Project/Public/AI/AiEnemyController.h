@@ -24,10 +24,10 @@ UCLASS(Blueprintable)
 class HJ_PROJECT_API AAiEnemyController : public AAIController
 {
 	GENERATED_BODY()
-	
+
 public:
 	AAiEnemyController();
-	
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
@@ -63,6 +63,7 @@ public:
 	//목표가 죽으면 정지 할수 있는 타이머 핸들
 	FTimerHandle ChaseTimerHandle;
 
+	//추격간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float chaseInterval = 0.2f;
 
