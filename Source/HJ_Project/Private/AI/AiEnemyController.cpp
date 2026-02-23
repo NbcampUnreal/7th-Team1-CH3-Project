@@ -55,10 +55,14 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 void AAiEnemyController::UpdateChase()
 {
 	//예외처리 좀비,플레이어가 존재하지않을시에 함수 종료
-	if (!TargetPlayer || !GetPawn() || MyZombieCharacter) return;
+	if (!GetPawn() || !MyZombieCharacter) return;
 
-	//거리 계산
-	float DistanceToPlayer = GetPawn()->GetDistanceTo(TargetPlayer);
+	//플레이어 거리 계산
+	float DistanceToPlayer = 999999.0f;
+	if (TargetPlayer)
+	{
+		DistanceToPlayer = GetPawn()->GetDistanceTo(TargetPlayer);
+	}
 
 	//관문과의 거리 계산
 	float DistanceToGate = 999999.0f;
@@ -71,12 +75,12 @@ void AAiEnemyController::UpdateChase()
 	if (CurrentState != EAIState::Stunned)//좀비상태가 경직이 아니면
 	{
 		//플레이어와의 거리가 공격사거리보다 작거나 같을때
-		if (DistanceToPlayer <= AttackRange)
+		if (TargetPlayer && DistanceToPlayer <= AttackRange)
 		{
 			CurrentState = EAIState::AttackingPlayer; //공격해라
 		}
 
-		else if (DistanceToPlayer <= DetectionRange)//공격범위는 아닌데 인식이 가능한가?
+		else if (TargetPlayer && DistanceToPlayer <= DetectionRange)//공격범위는 아닌데 인식이 가능한가?
 		{
 			CurrentState = EAIState::ChasingPlayer;//인식했으면 쫒아가
 		}
@@ -90,7 +94,7 @@ void AAiEnemyController::UpdateChase()
 		{
 			CurrentState = EAIState::MovingToGate;//최종관문을 향해서 가라
 		}
-	
+
 	}
 
 	//판단 결정하고 실제 행동
@@ -103,9 +107,12 @@ void AAiEnemyController::UpdateChase()
 		}
 		break;
 	case EAIState::ChasingPlayer://플레이어를 인식가능한 범위에 들어왔을떄
-		MoveToActor(TargetPlayer, 50.0f);//플레이어와 50.0만큼 주어서 바짝 쫓아가게
+		if (TargetPlayer)//플레이어와 50.0만큼 주어서 바짝 쫓아가게
+		{
+			MoveToActor(TargetPlayer, 50.0f);
+		}
 		break;
-		
+
 	case EAIState::AttackingPlayer://플레이어 공격중
 	case EAIState::AttackingGate: // 관문 공격시 이동 정지
 	case EAIState::Stunned://플레이어가 쏜총에 맞아 스턴중
@@ -118,7 +125,7 @@ void AAiEnemyController::UpdateChase()
 	if (CurrentState == EAIState::AttackingGate && FinalGate)
 	{
 		DamageAccTime += chaseInterval;// 시간 누적
-		
+
 		//좀비 캐릭터 공격 간격 비교
 		if (DamageAccTime >= MyZombieCharacter->AttackInterval)
 		{
@@ -136,8 +143,8 @@ void AAiEnemyController::UpdateChase()
 			// 로그로 확인 (나중에 지워도 됨)
 			UE_LOG(LogTemp, Warning, TEXT("관문 공격! 데미지: %f"), MyZombieCharacter->AttackDamage);
 		}
-	
-		
+
+
 	}
 	else
 	{
