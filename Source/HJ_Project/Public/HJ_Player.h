@@ -6,7 +6,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
-class AEquipWeaponMaster;  
+class AEquipWeaponMaster;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_Player : public ACharacter
@@ -16,9 +16,11 @@ class HJ_PROJECT_API AHJ_Player : public ACharacter
 public:
     AHJ_Player();
 
-    void StartFire(); 
-
+    void StartFire();
     void SetAimMode(bool bAim);
+
+    // ✅ FOV 보간을 위해 Tick 사용
+    virtual void Tick(float DeltaTime) override;
 
 protected:
     virtual void BeginPlay() override;
@@ -30,9 +32,8 @@ protected:
     UCameraComponent* FollowCamera;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-    AEquipWeaponMaster* CurrentWeapon;   // 🔥 타입 확인
+    AEquipWeaponMaster* CurrentWeapon;
 
-    //체력 시스템(블루프린트에서 수정가능)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHP;
 
@@ -44,10 +45,34 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     bool bIsAiming = false;
-    
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
+    bool bIsDead = false;
+
+    // ✅ Aim(견착) 카메라 설정
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    float NormalFOV = 90.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    float AimFOV = 60.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    float AimInterpSpeed = 12.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    float NormalWalkSpeed = 600.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    float AimWalkSpeed = 350.0f;
+
 public:
-    virtual float TakeDamage(float DamageAmount,
+    virtual float TakeDamage(
+        float DamageAmount,
         struct FDamageEvent const& DamageEvent,
         class AController* EventInstigator,
-        AActor* DamageCauser) override;
+        AActor* DamageCauser
+    ) override;
+
+    UFUNCTION(BlueprintCallable)
+    bool IsDead() const { return bIsDead; }
 };

@@ -25,6 +25,7 @@ protected:
 	void StartPreparation();
 	void StartWave();
 	void EndWave();
+	bool bIsDefeatHandled = false;
 
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	AHJ_SpawnZombie* SpawnZombieActor;
@@ -35,4 +36,6 @@ protected:
 public:
 	void OnZombieKilled();
 	void HandleDefeat();
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_OnDefeat();
 };
