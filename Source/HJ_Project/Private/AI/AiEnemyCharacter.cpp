@@ -1,5 +1,8 @@
-﻿#include "AI/AiEnemyCharacter.h"
+
+#include "AI/AiEnemyCharacter.h"
 #include "Ai/AiEnemyController.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Engine/DamageEvents.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -149,8 +152,28 @@ float AAiEnemyCharacter::TakeDamage(
 {
 	if (bIsDead) return 0.0f;
 
+	//부위별 데메지 배율 계산
+	float NewDamageAmount = DamageAmount;//기본 데미지
+
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+
+		if (PointDamageEvent->HitInfo.PhysMaterial.IsValid())
+		{
+			FString MaterialName = PointDamageEvent->HitInfo.PhysMaterial->GetName();
+
+			//즉사
+			if (MaterialName.Contains(TEXT("PM_Head")))
+			{
+				NewDamageAmount = Health;
+				UE_LOG(LogTemp, Warning, TEXT("[Headshot] Instant Death Applied!"));
+			}
+		}
+	}
+
 	const float ActualDamage = Super::TakeDamage(
-		DamageAmount,
+		NewDamageAmount,
 		DamageEvent,
 		EventInstigator,
 		DamageCauser

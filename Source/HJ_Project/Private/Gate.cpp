@@ -44,6 +44,10 @@ float AGate::TakeDamage(float DamageAmount,
 	if (ActualDamage > 0.0f)
 	{
 		Health -= ActualDamage;
+		//로그
+		FString CauserName = DamageCauser ? DamageCauser->GetName() : TEXT("Unknown");
+		UE_LOG(LogTemp, Warning, TEXT("[Gate] Damaged by: %s | Damage: %.1f | Current HP: %.1f"),
+			*CauserName, ActualDamage, Health);
 
 		if (Health <= 0.0f)
 		{

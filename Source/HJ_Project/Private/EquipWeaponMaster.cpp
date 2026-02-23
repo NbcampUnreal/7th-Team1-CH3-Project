@@ -1,4 +1,4 @@
-﻿#include "EquipWeaponMaster.h"
+#include "EquipWeaponMaster.h"
 
 #include "Components/SceneComponent.h"
 #include "Components/ArrowComponent.h"
@@ -60,6 +60,10 @@ void AEquipWeaponMaster::Fire()
 	ShotParams.AddIgnoredActor(this);
 	ShotParams.AddIgnoredActor(GetOwner());
 
+	//헤드샷 판정 정보
+	ShotParams.bReturnPhysicalMaterial = true;
+	ShotParams.bTraceComplex = true;
+
 	const bool bShotHit = GetWorld()->LineTraceSingleByChannel(
 		ShotHit, MuzzleLoc, ShotEnd, ECC_Visibility, ShotParams);
 
@@ -94,6 +98,14 @@ void AEquipWeaponMaster::Fire()
 
 	AActor* HitActor = ShotHit.GetActor();
 	if (!HitActor) return;
+
+	//관문 보호
+	if (HitActor->ActorHasTag(TEXT("Gate")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("관문명중!"));
+		return;
+	}
+
 
 	// 4) 데미지가 0이면 종료 (BP에서 DT_Weapon 값이 세팅 안 된 상태)
 	if (CurrentDamage <= 0.f)

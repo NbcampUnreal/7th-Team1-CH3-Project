@@ -57,6 +57,9 @@ void AAiEnemyController::UpdateChase()
 	//예외처리 좀비,플레이어가 존재하지않을시에 함수 종료
 	if (!GetPawn() || !MyZombieCharacter) return;
 
+	//관문이 파과 되었는가?
+	bool bIsGateValid = IsValid(FinalGate);
+
 	//플레이어 거리 계산
 	float DistanceToPlayer = 999999.0f;
 	if (TargetPlayer)
@@ -66,7 +69,7 @@ void AAiEnemyController::UpdateChase()
 
 	//관문과의 거리 계산
 	float DistanceToGate = 999999.0f;
-	if (FinalGate)
+	if (bIsGateValid)
 	{
 		DistanceToGate = GetPawn()->GetDistanceTo(FinalGate);
 	}
@@ -85,7 +88,7 @@ void AAiEnemyController::UpdateChase()
 			CurrentState = EAIState::ChasingPlayer;//인식했으면 쫒아가
 		}
 
-		else if (FinalGate && DistanceToGate <= (AttackRange + 50.0f))//관문 공격 상태
+		else if (bIsGateValid && DistanceToGate <= 350.0f)//관문 공격 상태
 		{
 			CurrentState = EAIState::AttackingGate;
 		}
@@ -101,9 +104,9 @@ void AAiEnemyController::UpdateChase()
 	switch (CurrentState)
 	{
 	case EAIState::MovingToGate://플레이어를 인식못하고 최종관문을 향하는 결정을 했을때
-		if (FinalGate)
+		if (bIsGateValid)
 		{
-			MoveToActor(FinalGate, 100.0f); //관문에 바짝붙으면 안좋을거같아서 거리를 줌
+			MoveToActor(FinalGate, 10.0f); //관문에 바짝붙으면 안좋을거같아서 거리를 줌
 		}
 		break;
 	case EAIState::ChasingPlayer://플레이어를 인식가능한 범위에 들어왔을떄
@@ -122,7 +125,7 @@ void AAiEnemyController::UpdateChase()
 	}
 
 	//좀비 캐릭터 변수 사용
-	if (CurrentState == EAIState::AttackingGate && FinalGate)
+	if (CurrentState == EAIState::AttackingGate && bIsGateValid)
 	{
 		DamageAccTime += chaseInterval;// 시간 누적
 
@@ -143,9 +146,8 @@ void AAiEnemyController::UpdateChase()
 			// 로그로 확인 (나중에 지워도 됨)
 			UE_LOG(LogTemp, Warning, TEXT("관문 공격! 데미지: %f"), MyZombieCharacter->AttackDamage);
 		}
-
-
 	}
+
 	else
 	{
 		//다시 붙었을때 즉시 공격 방지
