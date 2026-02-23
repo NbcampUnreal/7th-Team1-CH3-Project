@@ -2,6 +2,7 @@
 
 
 #include "AI/AiEnemyController.h"
+#include "AI/AiEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
 #include "GameFramework/Pawn.h"
@@ -14,6 +15,8 @@ AAiEnemyController::AAiEnemyController()
 	bSetControlRotationFromPawnOrientation = true;
 
 	chaseInterval = 0.5f;
+
+	DamageAccTime = 0.0f;
 }
 
 void AAiEnemyController::BeginPlay()
@@ -43,6 +46,8 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 		{
 			FinalGate = FoundGates[0];
 		}
+
+		MyZombieCharacter = Cast<AAiEnemyCharacter>(InPawn);//캐스팅
 	}
 
 }
@@ -50,10 +55,17 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 void AAiEnemyController::UpdateChase()
 {
 	//예외처리 좀비,플레이어가 존재하지않을시에 함수 종료
-	if (!TargetPlayer || !GetPawn()) return;
+	if (!TargetPlayer || !GetPawn() || MyZombieCharacter) return;
 
 	//거리 계산
 	float DistanceToPlayer = GetPawn()->GetDistanceTo(TargetPlayer);
+
+	//관문과의 거리 계산
+	float DistanceToGate = 999999.0f;
+	if (FinalGate)
+	{
+		DistanceToGate = GetPawn()->GetDistanceTo(FinalGate);
+	}
 
 	//거리, 상태 판단로직
 	if (CurrentState != EAIState::Stunned)//좀비상태가 경직이 아니면
@@ -67,6 +79,11 @@ void AAiEnemyController::UpdateChase()
 		else if (DistanceToPlayer <= DetectionRange)//공격범위는 아닌데 인식이 가능한가?
 		{
 			CurrentState = EAIState::ChasingPlayer;//인식했으면 쫒아가
+		}
+
+		else if (FinalGate && DistanceToGate <= (AttackRange + 50.0f))//관문 공격 상태
+		{
+			CurrentState = EAIState::AttackingGate;
 		}
 
 		else // 위에 조건들이 맞지 않으면 
@@ -90,10 +107,42 @@ void AAiEnemyController::UpdateChase()
 		break;
 		
 	case EAIState::AttackingPlayer://플레이어 공격중
+	case EAIState::AttackingGate: // 관문 공격시 이동 정지
 	case EAIState::Stunned://플레이어가 쏜총에 맞아 스턴중
 		//공격,스턴중일떄 움직임 정지
 		StopMovement();
 		break;
+	}
+
+	//좀비 캐릭터 변수 사용
+	if (CurrentState == EAIState::AttackingGate && FinalGate)
+	{
+		DamageAccTime += chaseInterval;// 시간 누적
+		
+		//좀비 캐릭터 공격 간격 비교
+		if (DamageAccTime >= MyZombieCharacter->AttackInterval)
+		{
+			UGameplayStatics::ApplyDamage(//캐릭터에 저장된 데미지로 관문에 데미지
+				FinalGate,
+				MyZombieCharacter->AttackDamage,
+				this,
+				MyZombieCharacter,
+				nullptr
+			);
+
+			//데미지 줐으니 시간 누적 초기화
+			DamageAccTime = 0.0f;
+
+			// 로그로 확인 (나중에 지워도 됨)
+			UE_LOG(LogTemp, Warning, TEXT("관문 공격! 데미지: %f"), MyZombieCharacter->AttackDamage);
+		}
+	
+		
+	}
+	else
+	{
+		//다시 붙었을때 즉시 공격 방지
+		DamageAccTime = 0.0f;
 	}
 }
 

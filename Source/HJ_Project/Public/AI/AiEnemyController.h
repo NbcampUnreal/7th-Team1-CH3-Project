@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h" 
 #include "AiEnemyController.generated.h"
 
+//좀비캐릭터 클래스 참조 하기위한 전방선언
+class AAiEnemyCharacter;
 
 
 UENUM(BlueprintType)
@@ -15,6 +17,7 @@ enum class EAIState : uint8
 	MovingToGate,//관문으로 이동
 	ChasingPlayer,//플레이어 추격
 	AttackingPlayer, //플레이어 공격
+	AttackingGate, //관문 공격
 	Stunned//총맞았을때 경직
 };
 
@@ -67,4 +70,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float chaseInterval = 0.2f;
 
+	//좀비 캐릭터 저장(데미지, 데미지 주는 간격 변수)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	AAiEnemyCharacter* MyZombieCharacter;
+
+private:
+	//공격시간 계산
+	float DamageAccTime = 0.0f;
 };
