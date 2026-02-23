@@ -6,41 +6,55 @@
 
 class UInputMappingContext;
 class UInputAction;
+class UUserWidget;              // ✅ 추가
 struct FInputActionValue;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_PlayerController : public APlayerController
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AHJ_PlayerController();
+    AHJ_PlayerController();
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
 
-	// IMC
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputMappingContext* InputMappingContext;
+    // IMC
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputMappingContext* InputMappingContext;
 
-	// Input Actions
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* MoveAction;
+    // Input Actions
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* MoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* JumpAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* JumpAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* LookAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInputAction* FireAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* LookAction;
 
-	// 입력 처리 함수
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void StartJump (const FInputActionValue& Value);
-	void StopJump(const FInputActionValue& Value);
-	void StartFire();
-	void StopFire();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UInputAction* FireAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* AimAction;
+
+    // ✅ Crosshair UI
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> CrosshairWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* CrosshairWidget;
+
+    // 입력 처리 함수
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    void StartJump(const FInputActionValue& Value);
+    void StopJump(const FInputActionValue& Value);
+    void StartFire();
+    void StopFire();
+    void StartAim(const FInputActionValue& Value);
+    void StopAim(const FInputActionValue& Value);
 };

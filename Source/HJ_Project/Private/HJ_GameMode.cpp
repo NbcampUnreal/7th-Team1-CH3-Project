@@ -3,6 +3,8 @@
 #include "HJ_Player.h"
 #include "HJ_PlayerController.h"
 #include "HJ_SpawnZombie.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
 #include "Engine/DataTable.h"
 
@@ -61,8 +63,29 @@ void AHJ_GameMode::EndWave()
 
 void AHJ_GameMode::HandleDefeat()
 {
-    AHJ_GameState* GS = GetGameState<AHJ_GameState>();
-    if (!GS) return;
+    if (bIsDefeatHandled) return;
+    bIsDefeatHandled = true;
 
-    GS->SetBattleState(EBattleState::Defeat);
+    AHJ_GameState* GS = GetGameState<AHJ_GameState>();
+    if (GS)
+    {
+        GS->SetBattleState(EBattleState::Defeat);
+    }
+
+    // 1) 게임 정지(완전 멈춤)
+    UGameplayStatics::SetGamePaused(this, true);
+
+    // 2) 입력 막고 마우스 보여주기 (나중 UI 대비)
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+        PC->bShowMouseCursor = true;
+
+        FInputModeUIOnly Mode;
+        PC->SetInputMode(Mode);
+    }
+
+    // 3) 나중에 UI 붙일 훅
+    BP_OnDefeat();
 }
