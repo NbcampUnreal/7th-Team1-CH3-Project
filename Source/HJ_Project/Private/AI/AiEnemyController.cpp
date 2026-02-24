@@ -7,6 +7,7 @@
 #include "NavigationSystem.h"
 #include "GameFramework/Pawn.h"
 #include "TimerManager.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "GameFramework/Actor.h" //AActor와 관련된 모든 기능을 사용 가능하게 해주는 헤더
 
 AAiEnemyController::AAiEnemyController()
@@ -55,8 +56,7 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 void AAiEnemyController::UpdateChase()
 {
 	//예외처리 좀비,플레이어가 존재하지않을시에 함수 종료
-	if (!GetPawn() || !MyZombieCharacter) return;
-
+	if (!GetPawn() || !MyZombieCharacter || MyZombieCharacter->bIsDead) return;
 	//관문이 파과 되었는가?
 	bool bIsGateValid = IsValid(FinalGate);
 
@@ -73,6 +73,8 @@ void AAiEnemyController::UpdateChase()
 	{
 		DistanceToGate = GetPawn()->GetDistanceTo(FinalGate);
 	}
+
+	EAIState PreviousState = CurrentState; //상태 변경 감지 (현재상태 백업)
 
 	//거리, 상태 판단로직
 	if (CurrentState != EAIState::Stunned)//좀비상태가 경직이 아니면
@@ -106,7 +108,10 @@ void AAiEnemyController::UpdateChase()
 	case EAIState::MovingToGate://플레이어를 인식못하고 최종관문을 향하는 결정을 했을때
 		if (bIsGateValid)
 		{
-			MoveToActor(FinalGate, 10.0f); //관문에 바짝붙으면 안좋을거같아서 거리를 줌
+			if (PreviousState != EAIState::MovingToGate || GetMoveStatus() == EPathFollowingStatus::Idle)
+			{
+				MoveToActor(FinalGate, 10.0f); //관문에 바짝붙으면 안좋을거같아서 거리를 줌
+			}
 		}
 		break;
 	case EAIState::ChasingPlayer://플레이어를 인식가능한 범위에 들어왔을떄

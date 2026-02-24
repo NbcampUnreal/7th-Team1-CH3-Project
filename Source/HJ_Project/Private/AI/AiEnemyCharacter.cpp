@@ -19,28 +19,66 @@ AAiEnemyCharacter::AAiEnemyCharacter()
 	// ===== 기본 스탯 =====
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
-
 	MoveSpeed = 250.0f;
 	AttackDamage = 5.0f;
 	AttackInterval = 1.0f;
-
 	StunDuration = 1.0f;
 	bIsDead = false;
 
+	//무브먼트 최적화
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bUseRVOAvoidance = false;           // 서로 피하는 계산 OFF
+		GetCharacterMovement()->bEnablePhysicsInteraction = false; // 캐릭터끼리 밀치기 OFF
+		GetCharacterMovement()->MaxWalkSpeed = MoveSpeed; //설정한 이동 속도 적용
+	}
+
+	//캡슐 설정 (좀비끼리는 유령처럼 통과)
+	UCapsuleComponent* CapsulePtr = GetCapsuleComponent();
+	if (CapsulePtr)
+	{
+		CapsulePtr->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //물리적 밀치기 안함 충돌만 감지
+		CapsulePtr->SetCollisionResponseToAllChannels(ECR_Ignore); //모든 충돌 채널 무시로 초기화 
+
+		CapsulePtr->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block); // 바닥만 밟음
+		CapsulePtr->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);    // 좀비끼리는 겹침
+		CapsulePtr->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore); // 총알은 통과(메시가 맞음)
+
+		CapsulePtr->SetCanEverAffectNavigation(false); // 내비게이션 렉 방지 (움직일때 마다 길찾기 새로 안하도록)
+		CapsulePtr->SetGenerateOverlapEvents(false); //겹치는 이벤트 계산 무시
+	}
+
+	//메쉬 설정 (플레이어 길막 + 총알 타격)
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //메쉬 물리연산 X 충돌만 감지
+		GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);// 모든 채널 무시
+
+		GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);      // 플레이어는 확실히 길막
+		GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // 총알 타격 허용
+
+		// 화면 밖 좀비 애니메이션 연산 안함 (성능 이득)
+		GetMesh()->SetCanEverAffectNavigation(false); //메쉬 길찾기에 영향안주게 설정
+		GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered; //카메라에 안잡힌 좀비는 애니메이션 스킵해서 최적화
+	}
+
+
 	// ===== 공격 범위 스피어 =====
-	AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere"));
-	AttackSphere->SetupAttachment(RootComponent);
-	AttackSphere->SetSphereRadius(150.f);
+	AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere")); // 공격 감지용 투명 구체
+	AttackSphere->SetupAttachment(RootComponent); // 캐릭터 캡슐에 부착
+	AttackSphere->SetSphereRadius(150.f); // 150cm 내에 있으면 공격 
 
 	// 공격 범위는 Overlap만 필요
-	AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AttackSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	AttackSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	AttackSphere->SetGenerateOverlapEvents(true);
+	AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //물리연산X 겹침만 
+	AttackSphere->SetCollisionResponseToAllChannels(ECR_Ignore); // 모든 채널 무시
+	AttackSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); //플레이어가 들어왔을때만 오버랩 이벤트 발생
+	AttackSphere->SetGenerateOverlapEvents(true); // 오버랩 함수 실행 설정
 
 	// ===== 캡슐(몸통) 충돌 =====
 	// 여기서는 기본 캐릭터 설정을 크게 건드리지 않는 게 안전함.
 	// (총 트레이스가 안 맞으면 캡슐/메시에서 Visibility=Block만 추가로 맞춰주면 됨)
+
+	
 }
 
 void AAiEnemyCharacter::BeginPlay()
