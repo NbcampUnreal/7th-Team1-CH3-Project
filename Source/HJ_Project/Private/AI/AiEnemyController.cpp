@@ -23,12 +23,17 @@ AAiEnemyController::AAiEnemyController()
 void AAiEnemyController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	float RandomDelay = FMath::FRandRange(0.0f, chaseInterval); //공격하는 시간을 일치하는게 아니라 각각 엇박자로 계산
+
+
 	//좀비 상황판단하는 시간
 	GetWorldTimerManager().SetTimer(ChaseTimerHandle,
 		this,
 		&AAiEnemyController::UpdateChase,
 		chaseInterval,
-		true);
+		true,
+		RandomDelay);//이게 엇박자로 생각
 }
 
 void AAiEnemyController::OnPossess(APawn* InPawn)
@@ -117,7 +122,11 @@ void AAiEnemyController::UpdateChase()
 	case EAIState::ChasingPlayer://플레이어를 인식가능한 범위에 들어왔을떄
 		if (TargetPlayer)//플레이어와 50.0만큼 주어서 바짝 쫓아가게
 		{
-			MoveToActor(TargetPlayer, 50.0f);
+			//공격해야할 대상이 바뀌었을때 민 호출
+			if (PreviousState != EAIState::ChasingPlayer || GetMoveStatus() == EPathFollowingStatus::Idle)
+			{
+				MoveToActor(TargetPlayer, 50.0f);
+			}
 		}
 		break;
 
