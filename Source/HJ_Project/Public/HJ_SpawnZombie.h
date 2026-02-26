@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -7,6 +7,7 @@
 
 class UBoxComponent;
 class UDataTable;
+class AHordeManager;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_SpawnZombie : public AActor
@@ -31,6 +32,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	UDataTable* WaveDataTable;
+
+	//호드메니져 연결
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Horde")
+	TObjectPtr<AHordeManager> HordeManager = nullptr;
+
 
 private:
 

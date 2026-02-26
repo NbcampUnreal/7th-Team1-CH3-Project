@@ -1,6 +1,6 @@
 
 #include "AI/AiEnemyCharacter.h"
-
+#include "AI/HordeManager.h"
 #include "AI/AiEnemyController.h"          // AI 멈추기용
 #include "Gate.h"                     // 게이트 슬롯 해제용
 #include "PhysicalMaterials/PhysicalMaterial.h"
@@ -215,6 +215,12 @@ void AAiEnemyCharacter::Die()
     if (USkeletalMeshComponent* MeshComp = GetMesh())
     {
         MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+
+    // Horde 리더 사망 처리
+    if (OwnerHorde)
+    {
+        OwnerHorde->NotifyZombieDied(this);
     }
 
     BP_OnDeath();

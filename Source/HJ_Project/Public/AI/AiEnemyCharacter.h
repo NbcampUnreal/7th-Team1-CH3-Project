@@ -86,8 +86,8 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
 	TArray<TObjectPtr<AAiEnemyCharacter>> Followers;
 
-	/*UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
-	TObjectPtr<AHordeManager> OwnerHorde = nullptr;*/
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
+	TObjectPtr<AHordeManager> OwnerHorde = nullptr;
 
 
 	// Gate Slot

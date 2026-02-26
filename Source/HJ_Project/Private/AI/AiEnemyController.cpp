@@ -1,13 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "AI/AiEnemyController.h"
-
-#include "AI/AiEnemyCharacter.h"               // 내 좀비
-#include "Gate.h"                         // Gate 슬롯/검사
-#include "Kismet/GameplayStatics.h"            // 플레이어 찾기, 태그 찾기
-#include "Navigation/PathFollowingComponent.h" // GetMoveStatus
-#include "TimerManager.h"                      // 타이머
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AI/AiEnemyCharacter.h"               
+#include "Gate.h"                         
+#include "Kismet/GameplayStatics.h"            
+#include "Navigation/PathFollowingComponent.h" 
+#include "TimerManager.h"
 
 AAiEnemyController::AAiEnemyController()
 {
@@ -24,12 +21,12 @@ void AAiEnemyController::BeginPlay()
 	const float RandomDelay = FMath::FRandRange(0.f, UpdateInterval);
 
 	GetWorldTimerManager().SetTimer(
-		UpdateTimerHandle,            // 타이머 핸들
-		this,                         // 실행 객체
-		&AAiEnemyController::UpdateAI,// 호출 함수
-		UpdateInterval,               // 주기
-		true,                         // 반복
-		RandomDelay                   // 시작 딜레이(엇박자)
+		UpdateTimerHandle,
+		this,
+		&AAiEnemyController::UpdateAI,
+		UpdateInterval,
+		true,
+		RandomDelay
 	);
 }
 
@@ -38,10 +35,8 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	MyZombie = Cast<AAiEnemyCharacter>(InPawn);
-	// 컨트롤러가 소유한 Pawn을 좀비로 캐스팅
 
 	FindTargets();
-	// 플레이어/Gate 찾기
 
 	// 스폰되자마자 Gate로 이동
 	if (IsValid(TargetGate))
@@ -49,17 +44,21 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 		CurrentState = EAIState::MovingToGate;
 		MoveToActor(TargetGate, 50.f);
 	}
+
+	// 좀비끼리 겹침 완화
+	if (MyZombie && MyZombie->GetCharacterMovement())
+	{
+		MyZombie->GetCharacterMovement()->bUseRVOAvoidance = true;
+	}
 }
 
 void AAiEnemyController::FindTargets()
 {
-	// 플레이어 찾기
 	if (GetWorld())
 	{
 		TargetPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	}
 
-	// Gate 찾기
 	TArray<AActor*> FoundGates;
 	if (GetWorld())
 	{
@@ -76,8 +75,7 @@ void AAiEnemyController::UpdateAI()
 	// 예외처리
 	if (!MyZombie || MyZombie->bIsDead) return;
 
-	
-	//스턴 처리
+	// 스턴 처리
 	if (MyZombie->bIsStunned)
 	{
 		CurrentState = EAIState::Stunned;
@@ -87,18 +85,16 @@ void AAiEnemyController::UpdateAI()
 	}
 
 	
-	// 2) 팔로워 최적화: 리더만 따라감
+	// 팔로워는 리더만 따라감 (최적화)
 	if (!MyZombie->bIsLeader && IsValid(MyZombie->Leader))
 	{
-		CurrentState = EAIState::MovingToGate;
-
-		// 팔로워는 리더만 따라감
 		MoveToActor(MyZombie->Leader, 120.f);
 		return;
 	}
 
 	
-	// 3) 리더 AI 판단 (거리 계산)
+	// 리더 AI 판단
+
 	const bool bPlayerValid = IsValid(TargetPlayer);
 	const bool bGateValid = IsValid(TargetGate);
 
@@ -116,33 +112,29 @@ void AAiEnemyController::UpdateAI()
 
 	EAIState Prev = CurrentState;
 
-	
-	//상태 결정
-	// 플레이어가 공격 범위면 플레이어 공격
+	// 상태 결정
+
 	if (bPlayerValid && DistToPlayer <= AttackRange)
 	{
 		CurrentState = EAIState::AttackingPlayer;
 	}
-	// 플레이어가 인식 범위면 추격 (리더만)
 	else if (bPlayerValid && DistToPlayer <= DetectionRange)
 	{
 		CurrentState = EAIState::ChasingPlayer;
 	}
-	// 게이트 근처면 게이트 공격 시도 
 	else if (bGateValid && DistToGate <= GateAttackEnterRange)
 	{
-		// 게이트 공격  시도
 		TryEnterGateAttack();
 	}
 	else
 	{
-		// 기본은 게이트로 이동
 		CurrentState = EAIState::MovingToGate;
 	}
 
-	
-	// 5) 상태에 따른 행동
-	
+	// ------------------------------
+	// 상태에 따른 행동
+	// ------------------------------
+
 	switch (CurrentState)
 	{
 	case EAIState::MovingToGate:
@@ -151,22 +143,22 @@ void AAiEnemyController::UpdateAI()
 		break;
 
 	case EAIState::ChasingPlayer:
-		MoveToPlayerIfNeeded(Prev);
 
-		// Gate 슬롯 잡고 있으면 해제 
+		// Gate 슬롯 잡고 있으면 해제
 		if (MyZombie->RegisteredGate)
 		{
 			MyZombie->RegisteredGate->UnregisterAttacker(MyZombie);
 			MyZombie->RegisteredGate = nullptr;
 		}
 
+		MoveToPlayerIfNeeded(Prev);
 		AttackAccTime = 0.f;
 		break;
 
 	case EAIState::AttackingGate:
 	case EAIState::AttackingPlayer:
 		StopMovement();
-		TickAttack(); // 공격 누적/실행
+		TickAttack();
 		break;
 
 	case EAIState::Stunned:
@@ -181,8 +173,8 @@ void AAiEnemyController::MoveToGateIfNeeded(EAIState PrevState)
 {
 	if (!IsValid(TargetGate)) return;
 
-	// MoveTo를 매번 호출하면 비용이 큼
-	if (PrevState != EAIState::MovingToGate || GetMoveStatus() == EPathFollowingStatus::Idle)
+	if (PrevState != EAIState::MovingToGate ||
+		GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
 		MoveToActor(TargetGate, 50.f);
 	}
@@ -192,7 +184,8 @@ void AAiEnemyController::MoveToPlayerIfNeeded(EAIState PrevState)
 {
 	if (!IsValid(TargetPlayer)) return;
 
-	if (PrevState != EAIState::ChasingPlayer || GetMoveStatus() == EPathFollowingStatus::Idle)
+	if (PrevState != EAIState::ChasingPlayer ||
+		GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
 		MoveToActor(TargetPlayer, 80.f);
 	}
@@ -206,14 +199,13 @@ void AAiEnemyController::TryEnterGateAttack()
 		return;
 	}
 
-	// 이미 슬롯 잡고 공격 중이면 그대로 유지
+	// 이미 슬롯 잡고 있으면 유지
 	if (MyZombie->RegisteredGate == TargetGate)
 	{
 		CurrentState = EAIState::AttackingGate;
 		return;
 	}
 
-	// 슬롯 등록 시도
 	const bool bSuccess = TargetGate->TryRegisterAttacker(MyZombie);
 
 	if (bSuccess)
@@ -224,17 +216,17 @@ void AAiEnemyController::TryEnterGateAttack()
 	}
 	else
 	{
-		// 슬롯이 꽉 찼으면 플레이어로 분산
-		CurrentState = EAIState::ChasingPlayer;
+		// 슬롯 꽉 찼으면 플레이어로 분산 (플레이어 없으면 게이트 이동)
+		CurrentState = IsValid(TargetPlayer) ?
+			EAIState::ChasingPlayer :
+			EAIState::MovingToGate;
 	}
 }
 
 void AAiEnemyController::TickAttack()
 {
-	// 공격 시간 누적
 	AttackAccTime += UpdateInterval;
 
-	// 공격 간격이 되면 1번 공격
 	if (AttackAccTime < MyZombie->AttackInterval) return;
 
 	AttackAccTime = 0.f;
@@ -243,6 +235,16 @@ void AAiEnemyController::TickAttack()
 	if (CurrentState == EAIState::AttackingGate)
 	{
 		if (!IsValid(TargetGate)) return;
+
+		// 거리 벗어나면 공격 취소
+		const float Dist = MyZombie->GetDistanceTo(TargetGate);
+		if (Dist > GateAttackEnterRange + 50.f)
+		{
+			TargetGate->UnregisterAttacker(MyZombie);
+			MyZombie->RegisteredGate = nullptr;
+			CurrentState = EAIState::MovingToGate;
+			return;
+		}
 
 		UGameplayStatics::ApplyDamage(
 			TargetGate,
@@ -254,6 +256,7 @@ void AAiEnemyController::TickAttack()
 		return;
 	}
 
+	
 	// 플레이어 공격
 	if (CurrentState == EAIState::AttackingPlayer)
 	{
