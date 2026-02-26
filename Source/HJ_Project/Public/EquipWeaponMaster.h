@@ -15,8 +15,13 @@ class HJ_PROJECT_API AEquipWeaponMaster : public AActor
 public:
 	AEquipWeaponMaster();
 
+	// 단발 발사
 	UFUNCTION(BlueprintCallable)
 	virtual void Fire();
+
+	// 연사 시작 / 종료
+	virtual void StartFire();
+	virtual void StopFire();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -28,7 +33,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	float TraceDistance = 10000.f;
 
-	// ✅ DT_Weapon(블루프린트)에서 읽어온 데미지를 BP가 이 변수에 넣어줌
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Stat")
 	float CurrentDamage = 0.f;
 
@@ -40,6 +44,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Debug")
 	bool bDrawMuzzleDebug = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Fire")
+	float FireRate = 0.1f;
+
+	FTimerHandle FireTimerHandle;
 
 protected:
 	FVector GetMuzzleLocation() const;
