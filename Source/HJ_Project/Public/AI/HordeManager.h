@@ -23,6 +23,14 @@ public:
 	//리더 재선정용
 	void NotifyZombieDied(AAiEnemyCharacter* Zombie);
 
+	//리더 한명당 팔로워 8명
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Horde")
+	int32 FollowersPerLeader = 8;
+
+	//리더 최대치
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Horde")
+	int32 MaxLeaders = 12;
+	
 
 protected:
 	virtual void BeginPlay() override;

@@ -20,19 +20,59 @@ void AHordeManager::RegisterZombie(AAiEnemyCharacter* Zombie)
 	AllZombies.Add(Zombie);
 	Zombie->OwnerHorde = this;
 
-	// 첫 좀비는 리더로 지정
-	if (!CurrentLeader)
+	//현재 살아있는 리더 세기
+	int32 AliveLeaderCount = 0;
+	for (AAiEnemyCharacter* Z : AllZombies)
 	{
-		CurrentLeader = Zombie;
+		if (IsValid(Z) && !Z->bIsDead && Z->bIsLeader)
+		{
+			AliveLeaderCount++;
+		}
+	}
+
+	//새 리더뽑기
+	const int32 AliveCount = AllZombies.Num();
+	const bool bNeedMoreLeaders = (AliveLeaderCount == 0) ||
+		((AliveCount / (FollowersPerLeader + 1)) > AliveLeaderCount);
+
+	const bool bCanAddLeader = (AliveLeaderCount < MaxLeaders);
+
+	if (bNeedMoreLeaders && bCanAddLeader)
+	{
+		//새로 들어온 좀비를 리더로
 		Zombie->bIsLeader = true;
 		Zombie->Leader = nullptr;
+		return;
 	}
-	else
+
+	//팔로워가 적은 리더 따라가기
+	AAiEnemyCharacter* BestLeader = nullptr;
+	int32 BestFollowerCount = INT32_MAX;
+
+	for (AAiEnemyCharacter* Z : AllZombies)
 	{
-		Zombie->bIsLeader = false;
-		Zombie->Leader = CurrentLeader;
-		CurrentLeader->Followers.Add(Zombie);
+		if (!IsValid(Z) || Z->bIsDead) continue;
+		if (!Z->bIsLeader) continue;
+
+		const int32 FollowerCount = Z->Followers.Num();
+		if (FollowerCount < BestFollowerCount)
+		{
+			BestFollowerCount = FollowerCount;
+			BestLeader = Z;
+		}
 	}
+
+	if (!BestLeader)
+	{
+		// 리더가 없으면 그냥 리더로 승격
+		Zombie->bIsLeader = true;
+		Zombie->Leader = nullptr;
+		return;
+	}
+
+	Zombie->bIsLeader = false;
+	Zombie->Leader = BestLeader;
+	BestLeader->Followers.Add(Zombie);
 }
 
 

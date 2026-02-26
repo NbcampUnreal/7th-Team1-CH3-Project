@@ -34,9 +34,9 @@ protected:
 	UDataTable* WaveDataTable;
 
 	//호드메니져 연결
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Horde")
 	TObjectPtr<AHordeManager> HordeManager = nullptr;
-
 
 private:
 
