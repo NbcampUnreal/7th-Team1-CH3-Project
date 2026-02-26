@@ -20,15 +20,22 @@ public:
 	// 스폰된 좀비 등록
 	void RegisterZombie(AAiEnemyCharacter* Zombie);
 
+	//리더 재선정용
+	void NotifyZombieDied(AAiEnemyCharacter* Zombie);
+
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	// 전체 좀비 목록
 	UPROPERTY()
 	TArray<TObjectPtr<AAiEnemyCharacter>> AllZombies;
 
+	// 현재 리더
 	UPROPERTY()
 	TObjectPtr<AAiEnemyCharacter> CurrentLeader = nullptr;
 
+	// 리더 재선정
 	void AssignNewLeader();
 };
