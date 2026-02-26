@@ -8,7 +8,8 @@
 
 AHJ_PlayerController::AHJ_PlayerController()
 {
-    CrosshairWidget = nullptr;            
+    CrosshairWidget = nullptr;
+    HudWidgetInstance = nullptr;
 }
 
 void AHJ_PlayerController::BeginPlay()
@@ -31,6 +32,15 @@ void AHJ_PlayerController::BeginPlay()
         {
             CrosshairWidget->AddToViewport();
             CrosshairWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+
+    if (HudWidgetClass)
+    {
+        HudWidgetInstance = CreateWidget<UUserWidget>(this, HudWidgetClass);
+        if (HudWidgetInstance)
+        {
+            HudWidgetInstance->AddToViewport();
         }
     }
 }
@@ -142,7 +152,7 @@ void AHJ_PlayerController::StopFire()
 {
     AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
     if (!MyPlayer) return;
-	MyPlayer->StopFire();
+    MyPlayer->StopFire();
 }
 
 void AHJ_PlayerController::StartAim(const FInputActionValue& Value)

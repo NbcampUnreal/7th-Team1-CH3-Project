@@ -45,8 +45,17 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+    TSubclassOf<UUserWidget> HudWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+    TSubclassOf<UUserWidget> HudWidgetInstance;
+
     UPROPERTY()
     UUserWidget* CrosshairWidget;
+
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    UUserWidget* GetHUDWidget() const;
+
 
     // 입력 처리 함수
     void Move(const FInputActionValue& Value);
