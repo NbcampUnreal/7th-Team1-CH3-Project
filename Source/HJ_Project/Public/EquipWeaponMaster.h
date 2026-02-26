@@ -15,25 +15,10 @@ class HJ_PROJECT_API AEquipWeaponMaster : public AActor
 public:
 	AEquipWeaponMaster();
 
-	// ===== 연사 제어 =====
-	void StartFire();
-	void StopFire();
-
 	UFUNCTION(BlueprintCallable)
 	virtual void Fire();
 
 protected:
-	virtual void BeginPlay() override;
-
-	// ===== 연사용 =====
-	FTimerHandle FireTimerHandle;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Fire")
-	float FireRate = 0.1f; // 초당 10발
-
-	bool bIsFiring = false;
-
-	// ===== 기존 =====
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* Root;
 
@@ -43,6 +28,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	float TraceDistance = 10000.f;
 
+	// ✅ DT_Weapon(블루프린트)에서 읽어온 데미지를 BP가 이 변수에 넣어줌
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Stat")
 	float CurrentDamage = 0.f;
 
@@ -52,6 +38,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Debug")
 	bool bDrawCameraDebug = false;
 
-public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Debug")
+	bool bDrawMuzzleDebug = true;
+
+protected:
 	FVector GetMuzzleLocation() const;
 };

@@ -140,9 +140,6 @@ void AHJ_PlayerController::StartFire()
 
 void AHJ_PlayerController::StopFire()
 {
-    AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
-    if (!MyPlayer) return;
-	MyPlayer->StopFire();
 }
 
 void AHJ_PlayerController::StartAim(const FInputActionValue& Value)
