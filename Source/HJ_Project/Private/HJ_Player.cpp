@@ -10,35 +10,35 @@
 
 AHJ_Player::AHJ_Player()
 {
-    // ✅ FOV 보간을 위해 Tick 켬
     PrimaryActorTick.bCanEverTick = true;
 
-    // 카메라 컴포넌트
+    /* ================= Camera ================= */
+
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-
-    // 카메라 위치 조정
     CameraBoom->TargetArmLength = 420.f;
     CameraBoom->SocketOffset = FVector(0.f, 55.f, 70.f);
     CameraBoom->bUsePawnControlRotation = true;
     CameraBoom->bDoCollisionTest = true;
     CameraBoom->ProbeSize = 12.f;
-
-    // 카메라 회전
     CameraBoom->bEnableCameraLag = true;
     CameraBoom->CameraLagSpeed = 12.f;
 
-    // FollowCamera 설정
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom);
     FollowCamera->bUsePawnControlRotation = false;
 
-    // 캐릭터 회전 설정
-    bUseControllerRotationYaw = true;
-    GetCharacterMovement()->bOrientRotationToMovement = false;
-    GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
+    /* ================= Rotation ================= */
 
-    MaxHP = 100.0f;
+    // 🔴 기본은 이동 방향 기준 회전
+    bUseControllerRotationYaw = false;
+
+    UCharacterMovementComponent* Move = GetCharacterMovement();
+    Move->bOrientRotationToMovement = true;
+    Move->RotationRate = FRotator(0.f, 720.f, 0.f);
+    Move->MaxWalkSpeed = NormalWalkSpeed;
+
+    MaxHP = 100.f;
     CurrentHP = MaxHP;
 }
 
@@ -46,7 +46,13 @@ void AHJ_Player::BeginPlay()
 {
     Super::BeginPlay();
 
-    // ✅ 시작 FOV를 NormalFOV로 확정
+    // 🔥 초기 회전 동기화 (비틀림 해결 핵심)
+    if (Controller)
+    {
+        FRotator ControlRot = Controller->GetControlRotation();
+        SetActorRotation(FRotator(0.f, ControlRot.Yaw, 0.f));
+    }
+
     if (FollowCamera)
     {
         FollowCamera->SetFieldOfView(NormalFOV);
@@ -65,22 +71,18 @@ void AHJ_Player::BeginPlay()
             CurrentWeapon->SetOwner(this);
         }
     }
-    if (UCharacterMovementComponent* Move = GetCharacterMovement())
-    {
-        Move->MaxWalkSpeed = NormalWalkSpeed;
-    }
 }
 
 void AHJ_Player::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (!FollowCamera) return;
+    if (!FollowCamera || bIsDead) return;
 
-    // 죽었으면 굳이 보간 안 해도 됨(선택)
-    if (bIsDead) return;
+    /* ===== FOV 보간 ===== */
 
     const float TargetFOV = bIsAiming ? AimFOV : NormalFOV;
+
     const float NewFOV = FMath::FInterpTo(
         FollowCamera->FieldOfView,
         TargetFOV,
@@ -89,77 +91,94 @@ void AHJ_Player::Tick(float DeltaTime)
     );
 
     FollowCamera->SetFieldOfView(NewFOV);
+
+    /* ===== 견착 시 카메라 Yaw 고정 ===== */
+
+    if (bIsAiming && Controller)
+    {
+        FRotator ControlRot = Controller->GetControlRotation();
+        FRotator TargetRot(0.f, ControlRot.Yaw, 0.f);
+
+        FRotator NewRot = FMath::RInterpTo(
+            GetActorRotation(),
+            TargetRot,
+            DeltaTime,
+            15.f
+        );
+
+        SetActorRotation(NewRot);
+    }
 }
 
 void AHJ_Player::SetAimMode(bool bAim)
 {
     bIsAiming = bAim;
-    UE_LOG(LogTemp, Warning, TEXT("AIM: %s"), bIsAiming ? TEXT("ON") : TEXT("OFF"));
 
-    if (UCharacterMovementComponent* Move = GetCharacterMovement())
+    UCharacterMovementComponent* Move = GetCharacterMovement();
+
+    if (bIsAiming)
     {
-        Move->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : NormalWalkSpeed;
+        Move->bOrientRotationToMovement = false;
+        Move->MaxWalkSpeed = AimWalkSpeed;
+    }
+    else
+    {
+        Move->bOrientRotationToMovement = true;
+        Move->MaxWalkSpeed = NormalWalkSpeed;
     }
 }
 
-float AHJ_Player::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void AHJ_Player::StartFire()
 {
-    if (bIsDead) return 0.0f;
-
-    float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-    // 안전장치: Super가 0을 리턴하는 케이스 대비
-    const float AppliedDamage = (ActualDamage > 0.0f) ? ActualDamage : DamageAmount;
-
-    if (AppliedDamage > 0.0f)
+    if (CurrentWeapon)
     {
-        CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.0f, MaxHP);
+        CurrentWeapon->StartFire();
+    }
+}
 
-        UE_LOG(LogTemp, Warning, TEXT("HP: %f"), CurrentHP);
+void AHJ_Player::StopFire()
+{
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->StopFire();
+    }
+}
 
-        if (CurrentHP <= 0.0f)
+float AHJ_Player::TakeDamage(
+    float DamageAmount,
+    FDamageEvent const& DamageEvent,
+    AController* EventInstigator,
+    AActor* DamageCauser)
+{
+    if (bIsDead) return 0.f;
+
+    float ActualDamage = Super::TakeDamage(
+        DamageAmount,
+        DamageEvent,
+        EventInstigator,
+        DamageCauser);
+
+    const float AppliedDamage =
+        (ActualDamage > 0.f) ? ActualDamage : DamageAmount;
+
+    CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.f, MaxHP);
+
+    if (CurrentHP <= 0.f)
+    {
+        bIsDead = true;
+
+        GetCharacterMovement()->DisableMovement();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (UWorld* World = GetWorld())
         {
-            bIsDead = true;
-            UE_LOG(LogTemp, Warning, TEXT("YOU DIE YANG!"));
-
-            // (선택) 플레이어 움직임/충돌 끄기 (죽은 뒤에 더 이상 이상동작 방지)
-            if (UCharacterMovementComponent* Move = GetCharacterMovement())
+            if (AHJ_GameMode* GM =
+                Cast<AHJ_GameMode>(World->GetAuthGameMode()))
             {
-                Move->DisableMovement();
-            }
-            if (UCapsuleComponent* Cap = GetCapsuleComponent())
-            {
-                Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            }
-
-            // GameMode에 패배 처리 요청 (게임 전체 종료는 GameMode가 담당)
-            if (UWorld* World = GetWorld())
-            {
-                if (AGameModeBase* GMBase = World->GetAuthGameMode())
-                {
-                    if (AHJ_GameMode* GM = Cast<AHJ_GameMode>(GMBase))
-                    {
-                        GM->HandleDefeat();
-                    }
-                }
+                GM->HandleDefeat();
             }
         }
     }
 
     return AppliedDamage;
-}
-
-void AHJ_Player::StartFire()
-{
-    UE_LOG(LogTemp, Warning, TEXT("Fire Input"));
-
-    if (CurrentWeapon)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Weapon OK"));
-        CurrentWeapon->Fire();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("CurrentWeapon NULL"));
-    }
 }

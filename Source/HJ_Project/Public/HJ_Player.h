@@ -17,9 +17,9 @@ public:
     AHJ_Player();
 
     void StartFire();
+    void StopFire();
     void SetAimMode(bool bAim);
 
-    // ✅ FOV 보간을 위해 Tick 사용
     virtual void Tick(float DeltaTime) override;
 
 protected:
@@ -49,7 +49,6 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
     bool bIsDead = false;
 
-    // ✅ Aim(견착) 카메라 설정
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
     float NormalFOV = 90.0f;
 

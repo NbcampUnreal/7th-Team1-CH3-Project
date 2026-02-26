@@ -1,5 +1,5 @@
-#include "EquipWeaponMaster.h"
-
+﻿#include "EquipWeaponMaster.h"
+#include "TimerManager.h"
 #include "Components/SceneComponent.h"
 #include "Components/ArrowComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -132,4 +132,28 @@ void AEquipWeaponMaster::Fire()
 	);
 
 	UE_LOG(LogTemp, Warning, TEXT("[Fire] ApplyPointDamage -> %.1f to %s"), CurrentDamage, *HitActor->GetName());
+}
+
+void AEquipWeaponMaster::StartFire()
+{
+
+	if (FireRate <= 0.f)
+	{
+		Fire();
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(
+		FireTimerHandle,
+		this,
+		&AEquipWeaponMaster::Fire,
+		FireRate,
+		true,
+		0.0f
+	);
+}
+
+void AEquipWeaponMaster::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(FireTimerHandle);
 }
