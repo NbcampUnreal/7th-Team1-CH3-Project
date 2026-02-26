@@ -17,7 +17,6 @@ public:
     AHJ_Player();
 
     void StartFire();
-    void StopFire();
     void SetAimMode(bool bAim);
 
     // ✅ FOV 보간을 위해 Tick 사용

@@ -1,8 +1,10 @@
-﻿#include "HJ_SpawnZombie.h"
+#include "HJ_SpawnZombie.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
 #include "Engine/DataTable.h"
+#include "AI/AiEnemyCharacter.h"
+#include "AI/HordeManager.h"
 #include "Engine/World.h"
 
 AHJ_SpawnZombie::AHJ_SpawnZombie()
@@ -48,11 +50,20 @@ void AHJ_SpawnZombie::StartWave(int32 WaveNumber)
 	{
 		FVector SpawnLoc = GetRandomPointInBox();
 
-		GetWorld()->SpawnActor<AActor>(
+		AActor* Spawned = GetWorld()->SpawnActor<AActor>(
 			Row->ZombieClass,
 			SpawnLoc,
 			FRotator::ZeroRotator
 		);
+
+		if (Spawned && HordeManager)
+		{
+			if (AAiEnemyCharacter* Zombie = Cast<AAiEnemyCharacter>(Spawned))
+			{
+				HordeManager->RegisterZombie(Zombie);
+			}
+		}
+
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(

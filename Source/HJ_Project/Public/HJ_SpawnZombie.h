@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -7,6 +7,8 @@
 
 class UBoxComponent;
 class UDataTable;
+class AHordeManager;
+class AAiEnemyCharacter;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_SpawnZombie : public AActor
@@ -19,9 +21,11 @@ public:
 	virtual void BeginPlay() override;
 
 	// 웨이브 시작
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void StartWave(int32 WaveNumber);
 
 	// 다음 웨이브
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void NextWave();
 
 protected:
@@ -31,6 +35,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	UDataTable* WaveDataTable;
+
+	//레벨에 배치한 HordeManager를 BP에서 연결
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Horde")
+	TObjectPtr<AHordeManager> HordeManager = nullptr;
 
 private:
 

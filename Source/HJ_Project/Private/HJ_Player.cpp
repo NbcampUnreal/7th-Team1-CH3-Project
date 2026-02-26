@@ -151,20 +151,15 @@ float AHJ_Player::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 
 void AHJ_Player::StartFire()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Fire Pressed"));
+    UE_LOG(LogTemp, Warning, TEXT("Fire Input"));
 
     if (CurrentWeapon)
     {
-        CurrentWeapon->StartFire();  
+        UE_LOG(LogTemp, Warning, TEXT("Weapon OK"));
+        CurrentWeapon->Fire();
     }
-}
-
-void AHJ_Player::StopFire()
-{
-    UE_LOG(LogTemp, Warning, TEXT("Fire Released"));
-
-    if (CurrentWeapon)
+    else
     {
-        CurrentWeapon->StopFire();    
+        UE_LOG(LogTemp, Error, TEXT("CurrentWeapon NULL"));
     }
 }

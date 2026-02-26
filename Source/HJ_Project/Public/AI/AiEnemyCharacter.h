@@ -1,13 +1,15 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/SphereComponent.h"
 #include "TimerManager.h"
 #include "AiEnemyCharacter.generated.h"
 
-class USphereComponent;
+
 class AHJ_Player;
+class AGate;
+class AHordeManager;
+class UPhysicalMaterial;
 
 UCLASS()
 class HJ_PROJECT_API AAiEnemyCharacter : public ACharacter
@@ -19,22 +21,79 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
 
-	// =========================
-	// HP / Death
-	// =========================
+	
 public:
+
+	/*++++++++++++++++++++++++++++++
+	                스탯
+	++++++++++++++++++++++++++++++++*/
+	//최대 체력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stat")
 	float MaxHealth = 100.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Enemy|Stat")
+	//현재 체력
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Stat")
 	float Health = 100.0f;
 
+	//사망여부
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|State")
 	bool bIsDead = false;
 
-	// 언리얼 데미지 시스템 진입점(총에서 ApplyPointDamage 하면 여기로 들어옴)
+	//스턴
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|State")
+	bool bIsStunned = false;
+
+	//공격 데미지
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Combat")
+	float AttackDamage = 5.0f;
+
+	//공격 속도 조절
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Combat")
+	float AttackInterval = 1.0f;
+	
+	//이동 속도 조절
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Move")
+	float MoveSpeed = 250.0f;
+
+	//--------------------
+	//헤드샷 == 즉사
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Headshot")
+	TObjectPtr<UPhysicalMaterial> HeadshotPhysMat = nullptr;
+
+	//-----------------------------
+	//스턴
+
+	//스턴시간
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy|Stun")
+	float StunDuration = 0.6f;
+
+	//조건부 스턴 설정가능
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy|Stun")
+	bool bStunOnAnyHit = true;
+
+	//일정 데미지 이상이면 스턴
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy|Stun", meta = (EditCondition = "!bStunOnAnyHit"))
+	float MinDamageToStun = 10.0f;
+
+	//Horde
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
+	bool bIsLeader = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
+	TObjectPtr<AAiEnemyCharacter> Leader = nullptr;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
+	TArray<TObjectPtr<AAiEnemyCharacter>> Followers;
+
+	/*UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
+	TObjectPtr<AHordeManager> OwnerHorde = nullptr;*/
+
+
+	// Gate Slot
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Gate")
+		TObjectPtr<AGate> RegisteredGate = nullptr;
+
 	virtual float TakeDamage(
 		float DamageAmount,
 		struct FDamageEvent const& DamageEvent,
@@ -42,69 +101,36 @@ public:
 		AActor* DamageCauser
 	) override;
 
-protected:
-	// 사망 처리(모션 없이 충돌/이동 끄고 일정 시간 뒤 Destroy)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnHeadshot();
+	//헤드샷 발생 시 BP에서 이펙트/사운드/파티클 처리
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnDamaged(float Damage, AActor* DamageCauser);
+	//피격 반응(사운드/애님몽타주) BP에서 처리
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnStunStart(float Duration);
+	//스턴 시작 애니/이펙트
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnStunEnd();
+	//스턴 끝
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnDeath();
+	//사망 애니/이펙트/드롭 등 BP에서 처리
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
+	void StartStun();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
+	void EndStun();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
 	void Die();
 
-	// =========================
-	// Move / Attack
-	// =========================
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stat")
-	float MoveSpeed = 250.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stat")
-	float AttackDamage = 5.0f;
-
-	// 공격 틱(몇 초마다 데미지 줄지)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Attack")
-	float AttackInterval = 1.0f;
-
-	// 공격 범위 스피어(이 범위에 플레이어가 들어오면 일정시간마다 데미지)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
-	USphereComponent* AttackSphere;
-
-	// 현재 공격 중인 플레이어(범위 안에 들어온 플레이어)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
-	AHJ_Player* OverlappingPlayer = nullptr;
-
-	// 타겟(추적 대상)
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Enemy|AI")
-	AActor* TargetActor = nullptr;
-
-	// =========================
-	// Stun
-	// =========================
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Stun")
-	float StunDuration = 1.0f;
-
-protected:
-	// 공격 범위 들어옴/나감
-	UFUNCTION()
-	void OnAttackSphereBeginOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-	);
-
-	UFUNCTION()
-	void OnAttackSphereEndOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex
-	);
-
-	// 타이머로 호출되는 실제 데미지 적용
-	void ApplyDamageTick();
-
-	// 경직 해제
-	void ResetStun();
-
-	FTimerHandle DamageTimerHandle;
+private:
 	FTimerHandle StunTimerHandle;
+
 };
