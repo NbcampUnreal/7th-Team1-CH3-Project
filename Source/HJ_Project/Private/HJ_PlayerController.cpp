@@ -6,10 +6,10 @@
 #include "Blueprint/UserWidget.h"           
 #include "Components/Widget.h"              
 
-AHJ_PlayerController::AHJ_PlayerController()
+AHJ_PlayerController::AHJ_PlayerController() : 
+    CrosshairWidget(nullptr),
+    HUDWidgetInstance(nullptr)
 {
-    CrosshairWidget = nullptr;
-    HudWidgetInstance = nullptr;
 }
 
 void AHJ_PlayerController::BeginPlay()
@@ -35,14 +35,19 @@ void AHJ_PlayerController::BeginPlay()
         }
     }
 
- /*   if (HudWidgetClass)
+    if (HUDWidgetClass)
     {
-        HudWidgetInstance = CreateWidget<UUserWidget>(this, HudWidgetClass);
-        if (HudWidgetInstance)
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
         {
-            HudWidgetInstance->AddToViewport();
+            HUDWidgetInstance->AddToViewport();
         }
-    }*/
+    }
+}
+
+UUserWidget* AHJ_PlayerController::GetHUDWidget() const
+{
+    return HUDWidgetInstance;
 }
 
 void AHJ_PlayerController::SetupInputComponent()

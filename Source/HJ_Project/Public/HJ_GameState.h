@@ -36,4 +36,5 @@ public:
 	void SetWave(int32 NewWave);
 	void SetZombiesRemaining(int32 NewCount);
 	void SetBattleState(EBattleState NewState);
+	void UpDateHUD();
 };
