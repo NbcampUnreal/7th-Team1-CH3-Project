@@ -35,14 +35,14 @@ void AHJ_PlayerController::BeginPlay()
         }
     }
 
-    if (HudWidgetClass)
+ /*   if (HudWidgetClass)
     {
         HudWidgetInstance = CreateWidget<UUserWidget>(this, HudWidgetClass);
         if (HudWidgetInstance)
         {
             HudWidgetInstance->AddToViewport();
         }
-    }
+    }*/
 }
 
 void AHJ_PlayerController::SetupInputComponent()

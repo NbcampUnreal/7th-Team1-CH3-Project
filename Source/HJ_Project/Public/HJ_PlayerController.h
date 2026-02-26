@@ -53,8 +53,8 @@ protected:
     UPROPERTY()
     UUserWidget* CrosshairWidget;
 
-    UFUNCTION(BlueprintCallable, Category = "HUD")
-    UUserWidget* GetHUDWidget() const;
+    //UFUNCTION(BlueprintCallable, Category = "HUD")
+    //UUserWidget* GetHUDWidget() const;
 
 
     // 입력 처리 함수
