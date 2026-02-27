@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -171,6 +171,4 @@ protected:
 	virtual void IncreaseSpread();
 	virtual void RecoverSpread(float DeltaTime);
 
-protected:
-	FVector GetMuzzleLocation() const;
 };
