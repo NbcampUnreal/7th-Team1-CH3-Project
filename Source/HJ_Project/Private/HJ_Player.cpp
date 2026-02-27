@@ -1,4 +1,4 @@
-#include "HJ_Player.h"
+﻿#include "HJ_Player.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
 #include "Components/CapsuleComponent.h"
@@ -163,6 +163,12 @@ void AHJ_Player::StopFire()
 
 void AHJ_Player::SetAimMode(bool bAim)
 {
+    if (!bHasWeapon)
+    {
+        bIsAiming = false;
+        return;
+    }
+
     bIsAiming = bAim;
 
     UCharacterMovementComponent* Move = GetCharacterMovement();
@@ -233,12 +239,6 @@ void AHJ_Player::TickRecoil(float DeltaSeconds)
 
     RecoilPrev = RecoilCurrent;
 }
-
-
-
-
-
-
 
 float AHJ_Player::TakeDamage(
     float DamageAmount,
