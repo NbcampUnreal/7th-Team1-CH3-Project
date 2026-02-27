@@ -1,4 +1,4 @@
-﻿#include "HJ_Player.h"
+#include "HJ_Player.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
 #include "HJ_GameMode.h"
@@ -68,7 +68,7 @@ void AHJ_Player::BeginPlay()
                 FAttachmentTransformRules::SnapToTargetIncludingScale,
                 TEXT("hand_rSocket")
             );
-            CurrentWeapon->SetOwner(this);
+            CurrentWeapon->SetInstigator(this);
         }
     }
 }
@@ -76,6 +76,8 @@ void AHJ_Player::BeginPlay()
 void AHJ_Player::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    TickRecoil(DeltaTime);//반동 매 프레임 적용 및 복구
 
     if (!FollowCamera || bIsDead) return;
 
@@ -143,6 +145,76 @@ void AHJ_Player::StopFire()
         CurrentWeapon->StopFire();
     }
 }
+
+//무기 발사 했을 때 호출되는 함수
+void AHJ_Player::AddRecoilImpulse()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[Recoil] AddRecoilImpulse CALLED. Locally=%d Dead=%d Controller=%s"),
+        IsLocallyControlled() ? 1 : 0,
+        bIsDead ? 1 : 0,
+        Controller ? TEXT("YES") : TEXT("NO"));//로그
+
+    // 내 화면에서만 반동 적용
+    if (!IsLocallyControlled()) return;
+    if (bIsDead) return;
+
+    // 조준 중이면 더 약하게, 아니면 조금 더 세게
+    const float PitchMin = bIsAiming ? ADSPitchMin : HipPitchMin;
+    const float PitchMax = bIsAiming ? ADSPitchMax : HipPitchMax;
+    const float YawMin = bIsAiming ? ADSYawMin : HipYawMin;
+    const float YawMax = bIsAiming ? ADSYawMax : HipYawMax;
+
+    // 랜덤으로 약간의 흔들림
+    const float PitchKick = FMath::FRandRange(PitchMin, PitchMax); // 위로
+    const float YawKick = FMath::FRandRange(YawMin, YawMax);   // 좌우
+
+    // 목표 반동에 누적
+    RecoilTarget.Pitch += PitchKick;
+    RecoilTarget.Yaw += YawKick;
+
+    // 연사해도 하늘로 안 가게 누적 제한
+    RecoilTarget.Pitch = FMath::Clamp(RecoilTarget.Pitch, 0.f, MaxRecoilPitch);
+    RecoilTarget.Yaw = FMath::Clamp(RecoilTarget.Yaw, -MaxRecoilYaw, MaxRecoilYaw);
+}
+
+
+// 매 프레임 호출해서 반동을 부드럽게 적용하고, 다시 0으로 복구시킴
+void AHJ_Player::TickRecoil(float DeltaSeconds)
+{
+    static float Acc = 0.f;
+    Acc += DeltaSeconds;
+    if (Acc > 1.0f)
+    {
+        Acc = 0.f;
+        UE_LOG(LogTemp, Warning, TEXT("[Recoil] TickRecoil running. Locally=%d Controller=%s"),
+            IsLocallyControlled() ? 1 : 0,
+            Controller ? TEXT("YES") : TEXT("NO"));
+    }//로그
+
+    if (!IsLocallyControlled()) return;
+    if (bIsDead) return;
+    if (!Controller) return;
+
+    //현재값이 목표값을 따라가도록함
+    RecoilCurrent = FMath::RInterpTo(RecoilCurrent, RecoilTarget, DeltaSeconds, RecoilApplySpeed);
+
+    //목표값은 0으로 돌아가도록(조준 복구)
+    RecoilTarget = FMath::RInterpTo(RecoilTarget, FRotator::ZeroRotator, DeltaSeconds, RecoilReturnSpeed);
+
+    //이번 프레임 변화량만 컨트롤러 입력으로 적용
+    const FRotator Delta = RecoilCurrent - RecoilPrev;
+
+    AddControllerPitchInput(Delta.Pitch);
+    AddControllerYawInput(Delta.Yaw);
+
+    RecoilPrev = RecoilCurrent;
+}
+
+
+
+
+
+
 
 float AHJ_Player::TakeDamage(
     float DamageAmount,
