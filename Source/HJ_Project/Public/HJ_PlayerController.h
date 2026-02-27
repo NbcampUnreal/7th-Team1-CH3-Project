@@ -6,7 +6,7 @@
 
 class UInputMappingContext;
 class UInputAction;
-class UUserWidget;              // ✅ 추가
+class UUserWidget;
 struct FInputActionValue;
 
 UCLASS()
@@ -21,11 +21,11 @@ protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
 
-    // IMC
+    /* ================= Input ================= */
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputMappingContext* InputMappingContext;
 
-    // Input Actions
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* MoveAction;
 
@@ -35,29 +35,32 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* LookAction;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* FireAction;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* AimAction;
 
-    // ✅ Crosshair UI
+    /* 🔥 Reload 추가 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* ReloadAction;
+
+    /* ================= UI ================= */
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> HudWidgetClass;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
-    TSubclassOf<UUserWidget> HudWidgetInstance;
+
+    UPROPERTY()
+    UUserWidget* HudWidgetInstance;
 
     UPROPERTY()
     UUserWidget* CrosshairWidget;
 
-    //UFUNCTION(BlueprintCallable, Category = "HUD")
-    //UUserWidget* GetHUDWidget() const;
+    /* ================= Input Functions ================= */
 
-
-    // 입력 처리 함수
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void StartJump(const FInputActionValue& Value);
@@ -66,4 +69,5 @@ protected:
     void StopFire();
     void StartAim(const FInputActionValue& Value);
     void StopAim(const FInputActionValue& Value);
+    void Reload(const FInputActionValue& Value);
 };
