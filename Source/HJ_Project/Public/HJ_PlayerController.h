@@ -49,22 +49,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetClass;
 
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<UUserWidget> HudWidgetClass;
-
-    UPROPERTY()
-    UUserWidget* HudWidgetInstance;
-
-
     UPROPERTY()
     UUserWidget* CrosshairWidget;
 
 
     /* ================= Input Functions ================= */
-
-
-
 
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);

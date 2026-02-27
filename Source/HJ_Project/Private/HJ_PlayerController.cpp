@@ -1,9 +1,9 @@
-﻿#include "EnhancedInputSubsystems.h"
+﻿#include "HJ_PlayerController.h"
+#include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "Blueprint/UserWidget.h"  
 #include "Components/TextBlock.h"
-#include "HJ_PlayerController.h"
 #include "Components/Widget.h"
 #include "InputActionValue.h"
 #include "HJ_GameState.h"
@@ -74,7 +74,7 @@ UUserWidget* AHJ_PlayerController::GetHUDWidget() const
 
 void AHJ_PlayerController::SetupInputComponent()
 {
-    Super::SetupInputComponent();
+    APlayerController::SetupInputComponent();
 
     if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(InputComponent))
     {
@@ -201,6 +201,8 @@ void AHJ_PlayerController::Reload(const FInputActionValue& Value)
     if (!MyPlayer) return;
 
     MyPlayer->ReloadWeapon();   // 🔥 Player → Weapon → Reload()
+}
+
 void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
 {
     if (HUDWidgetInstance)

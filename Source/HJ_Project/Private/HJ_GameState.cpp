@@ -1,8 +1,8 @@
-﻿#include "HJ_PlayerController.h"
+﻿#include "HJ_GameState.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
-#include "HJ_GameState.h"
 #include "HJ_Player.h"
+#include "HJ_PlayerController.h"
 
 AHJ_GameState::AHJ_GameState()
 {
