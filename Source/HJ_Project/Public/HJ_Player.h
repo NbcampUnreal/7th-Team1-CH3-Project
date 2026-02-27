@@ -25,14 +25,23 @@ public:
 protected:
     virtual void BeginPlay() override;
 
+    /* ================= Camera ================= */
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     USpringArmComponent* CameraBoom;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* FollowCamera;
 
+    /* ================= Weapon ================= */
+
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
     AEquipWeaponMaster* CurrentWeapon;
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AEquipWeaponMaster> WeaponClass;
+
+    /* ================= Stat ================= */
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHP;
@@ -40,14 +49,13 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float CurrentHP;
 
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<AEquipWeaponMaster> WeaponClass;
-
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     bool bIsAiming = false;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
     bool bIsDead = false;
+
+    /* ================= Aim ================= */
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
     float NormalFOV = 90.0f;
@@ -63,6 +71,23 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
     float AimWalkSpeed = 350.0f;
+
+    /* ===== 추가 : 카메라 위치 보간용 ===== */
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float NormalArmLength = 420.f;
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float AimArmLength = 180.f;
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    FVector NormalSocketOffset = FVector(0.f, 55.f, 70.f);
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    FVector AimSocketOffset = FVector(0.f, 80.f, 80.f);
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float CameraInterpSpeed = 12.f;
 
 public:
     virtual float TakeDamage(

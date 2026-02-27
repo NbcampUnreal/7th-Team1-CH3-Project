@@ -16,8 +16,8 @@ AHJ_Player::AHJ_Player()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 420.f;
-    CameraBoom->SocketOffset = FVector(0.f, 55.f, 70.f);
+    CameraBoom->TargetArmLength = NormalArmLength;
+    CameraBoom->SocketOffset = NormalSocketOffset;
     CameraBoom->bUsePawnControlRotation = true;
     CameraBoom->bDoCollisionTest = true;
     CameraBoom->ProbeSize = 12.f;
@@ -30,7 +30,6 @@ AHJ_Player::AHJ_Player()
 
     /* ================= Rotation ================= */
 
-    // 🔴 기본은 이동 방향 기준 회전
     bUseControllerRotationYaw = false;
 
     UCharacterMovementComponent* Move = GetCharacterMovement();
@@ -46,7 +45,6 @@ void AHJ_Player::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 🔥 초기 회전 동기화 (비틀림 해결 핵심)
     if (Controller)
     {
         FRotator ControlRot = Controller->GetControlRotation();
@@ -77,13 +75,13 @@ void AHJ_Player::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (!FollowCamera || bIsDead) return;
+    if (!FollowCamera || !CameraBoom || bIsDead) return;
 
     /* ===== FOV 보간 ===== */
 
     const float TargetFOV = bIsAiming ? AimFOV : NormalFOV;
 
-    const float NewFOV = FMath::FInterpTo(
+    float NewFOV = FMath::FInterpTo(
         FollowCamera->FieldOfView,
         TargetFOV,
         DeltaTime,
@@ -92,7 +90,27 @@ void AHJ_Player::Tick(float DeltaTime)
 
     FollowCamera->SetFieldOfView(NewFOV);
 
-    /* ===== 견착 시 카메라 Yaw 고정 ===== */
+    /* ===== 카메라 위치 보간 ===== */
+
+    float TargetArm = bIsAiming ? AimArmLength : NormalArmLength;
+
+    CameraBoom->TargetArmLength = FMath::FInterpTo(
+        CameraBoom->TargetArmLength,
+        TargetArm,
+        DeltaTime,
+        CameraInterpSpeed
+    );
+
+    FVector TargetOffset = bIsAiming ? AimSocketOffset : NormalSocketOffset;
+
+    CameraBoom->SocketOffset = FMath::VInterpTo(
+        CameraBoom->SocketOffset,
+        TargetOffset,
+        DeltaTime,
+        CameraInterpSpeed
+    );
+
+    /* ===== 조준 시 캐릭터 회전 고정 ===== */
 
     if (bIsAiming && Controller)
     {
@@ -158,8 +176,7 @@ float AHJ_Player::TakeDamage(
         EventInstigator,
         DamageCauser);
 
-    const float AppliedDamage =
-        (ActualDamage > 0.f) ? ActualDamage : DamageAmount;
+    float AppliedDamage = (ActualDamage > 0.f) ? ActualDamage : DamageAmount;
 
     CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.f, MaxHP);
 
