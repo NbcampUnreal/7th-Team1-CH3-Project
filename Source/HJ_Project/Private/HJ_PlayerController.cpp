@@ -1,15 +1,21 @@
 ﻿#include "HJ_PlayerController.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Kismet/GameplayStatics.h"
+#include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h"  
+#include "Components/TextBlock.h"
+#include "Components/Widget.h"
 #include "InputActionValue.h"
+#include "HJ_GameState.h"
 #include "HJ_Player.h"
-#include "Blueprint/UserWidget.h"           
-#include "Components/Widget.h"              
 
-AHJ_PlayerController::AHJ_PlayerController()
+AHJ_PlayerController::AHJ_PlayerController() : 
+    CrosshairWidget(nullptr),
+    HUDWidgetClass(nullptr),
+    HUDWidgetInstance(nullptr),
+    MainMenuWidgetClass(nullptr),
+    MainMenuWidgetInstance(nullptr)
 {
-    CrosshairWidget = nullptr;
-    HudWidgetInstance = nullptr;
 }
 
 void AHJ_PlayerController::BeginPlay()
@@ -35,19 +41,40 @@ void AHJ_PlayerController::BeginPlay()
         }
     }
 
- /*   if (HudWidgetClass)
+    if (HUDWidgetClass)
     {
-        HudWidgetInstance = CreateWidget<UUserWidget>(this, HudWidgetClass);
-        if (HudWidgetInstance)
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
         {
-            HudWidgetInstance->AddToViewport();
+            HUDWidgetInstance->AddToViewport();
+
+            // ✅ 생성 직후 GameState에 있는 초기값을 UI에 반영
+            if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
+            {
+                GS->UpDateHUD();
+            }
         }
-    }*/
+    }
+
+    FString CurrentMapName = GetWorld()->GetMapName();
+    if (CurrentMapName.Contains("L_MainMenu"))
+    {
+        ShowMainMenu(false);
+    }
+    else
+    {
+        ShowGameHUD();
+    }
+}
+
+UUserWidget* AHJ_PlayerController::GetHUDWidget() const
+{
+    return HUDWidgetInstance;
 }
 
 void AHJ_PlayerController::SetupInputComponent()
 {
-    Super::SetupInputComponent();
+    APlayerController::SetupInputComponent();
 
     if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(InputComponent))
     {
@@ -174,4 +201,83 @@ void AHJ_PlayerController::Reload(const FInputActionValue& Value)
     if (!MyPlayer) return;
 
     MyPlayer->ReloadWeapon();   // 🔥 Player → Weapon → Reload()
+}
+
+void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
+{
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetClass)
+    {
+        MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
+        if (MainMenuWidgetInstance)
+        {
+            MainMenuWidgetInstance->AddToViewport();
+
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeUIOnly());
+        }
+
+        if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+        {
+            if (bIsRestart)
+            {
+                ButtonText->SetText(FText::FromString(TEXT("재시작")));
+            }
+            else
+            {
+                ButtonText->SetText(FText::FromString(TEXT("시작")));
+            }
+        }
+    }
+}
+
+
+
+void AHJ_PlayerController::ShowGameHUD()
+{
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
+
+    if (HUDWidgetClass)
+    {
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
+        {
+            HUDWidgetInstance->AddToViewport();
+
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+
+            if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
+            {
+                GS->UpDateHUD();
+            }
+        }
+        
+    }
+}
+
+void AHJ_PlayerController::StartGame()
+{
+    UGameplayStatics::OpenLevel(GetWorld(), FName("L_Heungnyemun"));
 }

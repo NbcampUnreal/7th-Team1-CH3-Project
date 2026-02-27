@@ -72,20 +72,12 @@ void AHJ_GameMode::HandleDefeat()
         GS->SetBattleState(EBattleState::Defeat);
     }
 
-    // 1) 게임 정지(완전 멈춤)
     UGameplayStatics::SetGamePaused(this, true);
 
-    // 2) 입력 막고 마우스 보여주기 (나중 UI 대비)
-    if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+    if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
     {
-        PC->SetIgnoreMoveInput(true);
-        PC->SetIgnoreLookInput(true);
-        PC->bShowMouseCursor = true;
-
-        FInputModeUIOnly Mode;
-        PC->SetInputMode(Mode);
+        PC->ShowMainMenu(true);
     }
-
-    // 3) 나중에 UI 붙일 훅
+    
     BP_OnDefeat();
 }

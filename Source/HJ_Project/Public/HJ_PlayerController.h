@@ -18,7 +18,6 @@ public:
     AHJ_PlayerController();
 
 protected:
-    virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
 
     /* ================= Input ================= */
@@ -50,14 +49,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<UUserWidget> HudWidgetClass;
-
-    UPROPERTY()
-    UUserWidget* HudWidgetInstance;
-
     UPROPERTY()
     UUserWidget* CrosshairWidget;
+
 
     /* ================= Input Functions ================= */
 
@@ -70,4 +64,26 @@ protected:
     void StartAim(const FInputActionValue& Value);
     void StopAim(const FInputActionValue& Value);
     void Reload(const FInputActionValue& Value);
+
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+    TSubclassOf<UUserWidget> HUDWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+    UUserWidget* HUDWidgetInstance;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+    TSubclassOf<UUserWidget> MainMenuWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+    UUserWidget* MainMenuWidgetInstance;
+
+    UFUNCTION(BlueprintPure, Category = "HUD")
+    UUserWidget* GetHUDWidget() const;
+
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void ShowGameHUD();
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void ShowMainMenu(bool bIsRestart);
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void StartGame();
+
+    virtual void BeginPlay() override;
 };
