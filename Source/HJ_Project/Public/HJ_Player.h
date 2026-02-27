@@ -44,6 +44,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void ReloadWeapon();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+    bool bHasWeapon = false;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -62,9 +65,6 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Weapon")
     TSubclassOf<AEquipWeaponMaster> WeaponClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-    bool bHasWeapon = false;
 
     /* ================= Stat ================= */
 

@@ -52,7 +52,6 @@ protected:
 	float FireRate = 0.1f;
 
 	/* ================= Ammo ================= */
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
 	int32 MagazineSize = 30;
 
