@@ -57,7 +57,7 @@ void AHJ_PlayerController::BeginPlay()
     }
 
     FString CurrentMapName = GetWorld()->GetMapName();
-    if (CurrentMapName.Contains("MenuLevel"))
+    if (CurrentMapName.Contains("L_MainMenu"))
     {
         ShowMainMenu(false);
     }
@@ -231,11 +231,11 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
         {
             if (bIsRestart)
             {
-                ButtonText->SetText(FText::FromString(TEXT("Restart")));
+                ButtonText->SetText(FText::FromString(TEXT("재시작")));
             }
             else
             {
-                ButtonText->SetText(FText::FromString(TEXT("Start")));
+                ButtonText->SetText(FText::FromString(TEXT("시작")));
             }
         }
     }

@@ -6,7 +6,7 @@
 
 AHJ_GameState::AHJ_GameState()
 {
-	CurrentWave = 0;
+	CurrentWave = 1;
 	ZombiesRemaining = 0;
 	BattleState = EBattleState::Preparation;
 }
