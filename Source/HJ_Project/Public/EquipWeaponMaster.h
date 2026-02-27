@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -6,6 +6,21 @@
 
 class USceneComponent;
 class UArrowComponent;
+class APlayerController;
+
+
+//탄이 없을 때 발사 막기
+USTRUCT(BlueprintType)
+struct FRecoilStep
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Pitch = 0.0f; // 위로 들림(+)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Yaw = 0.0f;   // 좌(-) 우(+)
+};
 
 UCLASS()
 class HJ_PROJECT_API AEquipWeaponMaster : public AActor
@@ -23,10 +38,14 @@ public:
 	virtual void StartFire();
 	virtual void StopFire();
 
-	/* ================= Reload ================= */
+	//재장전
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Ammo")
+	virtual void Reload();
 
-	UFUNCTION(BlueprintCallable)
-	void Reload();
+protected:
+	//Tick 에서 반동 복구
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void FinishReload();
@@ -82,5 +101,76 @@ protected:
 	bool bDrawMuzzleDebug = true;
 
 	FTimerHandle FireTimerHandle;
-	FTimerHandle ReloadTimerHandle;
+
+
+	//탄 (45발 예비탄 무한)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
+	int32 MaxAmmoInMag = 45; //탄창 최대치
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo")
+	int32 CurrentAmmoInMag = 45;  //현재 탄창 탄약
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
+	bool bInfiniteReserveAmmo = true;//예비탄 무한
+	
+
+	//탄이 없을 때 발사 막기
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Ammo")
+	bool CanFire() const; //CurrentAmmoInMag > 0 인지 체크
+
+	//발사 시 탄약 1발 감소
+	void ConsumeAmmo(); 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	TArray<FRecoilStep> RecoilPattern;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Recoil")
+	int32 ShotsFiredInBurst = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float RecoilOverflowMultiplier = 1.15f; // 
+	
+
+	// 반동이 무한정 커지지 않도록 상한선 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float MaxRecoilPitchPerShot = 0.35f; //한 발당 Pitch 반동 최대치
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float MaxRecoilYawPerShot = 0.12f;   // 한 발당 Yaw 반동 최대치
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	int32 RecoilOverflowStartShot = 20;  //이 발수 이후부터만 누적 패널티
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float RecoilOverflowSlope = 0.0f;   // 누적 증가 기울기
+
+	//스프레드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float BaseSpreadDeg = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float SpreadIncreasePerShotDeg = 0.012f; // 웨이브 여유를 위해 약간 완화
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float MaxSpreadDeg = 1.2f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Recoil")
+	float CurrentSpreadDeg = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
+	float SpreadRecoverySpeed = 12.0f; // 회복 더 빠르게
+
+	//  실제 반동을 컨트롤러 입력으로 적용
+	virtual void ApplyRecoil(APlayerController* PC);
+
+	// 연사 종료 시 버스트 카운트 리셋
+	virtual void ResetBurst();
+
+	// 스프레드 누적/복구
+	virtual void IncreaseSpread();
+	virtual void RecoverSpread(float DeltaTime);
+
+protected:
+	FVector GetMuzzleLocation() const;
 };
