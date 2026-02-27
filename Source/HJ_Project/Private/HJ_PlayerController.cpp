@@ -1,14 +1,20 @@
-﻿#include "HJ_PlayerController.h"
+﻿#include "EnhancedInputSubsystems.h"
+#include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"  
+#include "Components/TextBlock.h"
+#include "HJ_PlayerController.h"
+#include "Components/Widget.h"
 #include "InputActionValue.h"
+#include "HJ_GameState.h"
 #include "HJ_Player.h"
-#include "Blueprint/UserWidget.h"           
-#include "Components/Widget.h"              
 
 AHJ_PlayerController::AHJ_PlayerController() : 
     CrosshairWidget(nullptr),
-    HUDWidgetInstance(nullptr)
+    HUDWidgetClass(nullptr),
+    HUDWidgetInstance(nullptr),
+    MainMenuWidgetClass(nullptr),
+    MainMenuWidgetInstance(nullptr)
 {
 }
 
@@ -41,7 +47,24 @@ void AHJ_PlayerController::BeginPlay()
         if (HUDWidgetInstance)
         {
             HUDWidgetInstance->AddToViewport();
+
+            // ✅ 생성 직후 GameState에 있는 초기값을 UI에 반영
+            if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
+            {
+                GS->UpDateHUD();
+            }
         }
+    }
+
+    FString CurrentMapName = GetWorld()->GetMapName();
+    if (CurrentMapName.Contains("MenuLevel"))
+    {
+        ShowMainMenu(false);
+    }
+    else
+    {
+        // 메뉴 레벨이 아닐 경우(실제 게임 레벨) 게임 HUD 표시
+        ShowGameHUD();
     }
 }
 
@@ -179,4 +202,82 @@ void AHJ_PlayerController::Reload(const FInputActionValue& Value)
     if (!MyPlayer) return;
 
     MyPlayer->ReloadWeapon();   // 🔥 Player → Weapon → Reload()
+void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
+{
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetClass)
+    {
+        MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
+        if (MainMenuWidgetInstance)
+        {
+            MainMenuWidgetInstance->AddToViewport();
+
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeUIOnly());
+        }
+
+        if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+        {
+            if (bIsRestart)
+            {
+                ButtonText->SetText(FText::FromString(TEXT("Restart")));
+            }
+            else
+            {
+                ButtonText->SetText(FText::FromString(TEXT("Start")));
+            }
+        }
+    }
+}
+
+
+
+void AHJ_PlayerController::ShowGameHUD()
+{
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
+
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
+
+    if (HUDWidgetClass)
+    {
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
+        {
+            HUDWidgetInstance->AddToViewport();
+
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+
+            // ✅ 수정됨: HUD가 켜진 직후에 GameState를 가져와 최신 UI 정보를 갱신합니다.
+            if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
+            {
+                GS->UpDateHUD();
+            }
+        }
+        
+    }
+}
+
+void AHJ_PlayerController::StartGame()
+{
+    UGameplayStatics::OpenLevel(GetWorld(), FName("L_Heungnyemun"));
 }

@@ -18,7 +18,6 @@ public:
     AHJ_PlayerController();
 
 protected:
-    virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
 
     /* ================= Input ================= */
@@ -82,7 +81,20 @@ public:
     TSubclassOf<UUserWidget> HUDWidgetClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
     UUserWidget* HUDWidgetInstance;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+    TSubclassOf<UUserWidget> MainMenuWidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu")
+    UUserWidget* MainMenuWidgetInstance;
+
+    UFUNCTION(BlueprintPure, Category = "HUD")
+    UUserWidget* GetHUDWidget() const;
 
     UFUNCTION(BlueprintCallable, Category = "HUD")
-    UUserWidget* GetHUDWidget() const;
+    void ShowGameHUD();
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void ShowMainMenu(bool bIsRestart);
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void StartGame();
+
+    virtual void BeginPlay() override;
 };
