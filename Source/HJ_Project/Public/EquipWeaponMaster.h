@@ -30,11 +30,11 @@ class HJ_PROJECT_API AEquipWeaponMaster : public AActor
 public:
 	AEquipWeaponMaster();
 
-	// 단발 발사
+	/* ================= Fire ================= */
+
 	UFUNCTION(BlueprintCallable)
 	virtual void Fire();
 
-	// 연사 시작 / 종료
 	virtual void StartFire();
 	virtual void StopFire();
 
@@ -48,17 +48,48 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	void FinishReload();
+	FVector GetMuzzleLocation() const;
+
+	/* ================= Components ================= */
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* Root;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UArrowComponent* Muzzle;
 
+	/* ================= Weapon Stat ================= */
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	float TraceDistance = 10000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Stat")
 	float CurrentDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Fire")
+	float FireRate = 0.1f;
+
+	/* ================= Ammo ================= */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
+	int32 MagazineSize = 30;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
+	int32 MaxAmmo = 120;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo")
+	int32 CurrentAmmo;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo")
+	int32 CurrentMagazineAmmo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
+	float ReloadTime = 2.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|State")
+	bool bIsReloading = false;
+
+	/* ================= Debug ================= */
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bDrawDebug = true;
@@ -68,9 +99,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Debug")
 	bool bDrawMuzzleDebug = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Fire")
-	float FireRate = 0.1f;
 
 	FTimerHandle FireTimerHandle;
 

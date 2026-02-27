@@ -157,7 +157,6 @@ void AEquipWeaponMaster::Fire()
 	// 0) 현재 무기 데미지 체크
 	UE_LOG(LogTemp, Warning, TEXT("[Fire] CurrentDamage=%.1f Ammo=%d/%d"), CurrentDamage, CurrentAmmoInMag, MaxAmmoInMag);
 
-	// 1) 카메라 기준 조준점(AimPoint) 구하기
 	FVector CamLoc;
 	FRotator CamRot;
 	PC->GetPlayerViewPoint(CamLoc, CamRot);
@@ -170,6 +169,7 @@ void AEquipWeaponMaster::Fire()
 	FCollisionQueryParams CamParams(SCENE_QUERY_STAT(CameraTrace), true);
 	CamParams.AddIgnoredActor(this);
 	CamParams.AddIgnoredActor(GetOwner());
+
 	const bool bCamHit = GetWorld()->LineTraceSingleByChannel(
 		CamHit, CamStart, CamEnd, ECC_Visibility, CamParams);
 
@@ -192,8 +192,6 @@ void AEquipWeaponMaster::Fire()
 	FCollisionQueryParams ShotParams(SCENE_QUERY_STAT(ShotTrace), true);
 	ShotParams.AddIgnoredActor(this);
 	ShotParams.AddIgnoredActor(GetOwner());
-
-	//헤드샷 판정 정보
 	ShotParams.bReturnPhysicalMaterial = true;
 	ShotParams.bTraceComplex = true;
 
@@ -230,34 +228,22 @@ void AEquipWeaponMaster::Fire()
 	if (bDrawDebug)
 	{
 		if (bDrawCameraDebug)
-		{
-			DrawDebugLine(GetWorld(), CamLoc, AimPoint, FColor::Red, false, 0.6f, 0, 1.0f);
-		}
+			DrawDebugLine(GetWorld(), CamLoc, AimPoint, FColor::Red, false, 0.5f);
 
 		if (bDrawMuzzleDebug)
 		{
-			const FVector RealEnd = bShotHit ? ShotHit.ImpactPoint : ShotEnd;
-			DrawDebugLine(GetWorld(), MuzzleLoc, RealEnd, FColor::Green, false, 0.6f, 0, 1.5f);
-
-			if (bShotHit)
-			{
-				DrawDebugSphere(GetWorld(), ShotHit.ImpactPoint, 8.f, 12, FColor::Yellow, false, 0.8f);
-			}
+			FVector RealEnd = bShotHit ? ShotHit.ImpactPoint : ShotEnd;
+			DrawDebugLine(GetWorld(), MuzzleLoc, RealEnd, FColor::Green, false, 0.5f);
 		}
 	}
 
-	// 3) 히트가 없으면 종료
 	if (!bShotHit) return;
 
 	AActor* HitActor = ShotHit.GetActor();
 	if (!HitActor) return;
 
-	//관문 보호
 	if (HitActor->ActorHasTag(TEXT("Gate")))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("관문명중!"));
 		return;
-	}
 
 	// 4) 데미지가 0이면 종료
 	if (CurrentDamage <= 0.f)
@@ -269,9 +255,7 @@ void AEquipWeaponMaster::Fire()
 	// 5) ApplyPointDamage로 좀비 TakeDamage로 전달
 	AController* InstigatorController = nullptr;
 	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
-	{
 		InstigatorController = OwnerPawn->GetController();
-	}
 
 	UGameplayStatics::ApplyPointDamage(
 		HitActor,
@@ -283,7 +267,8 @@ void AEquipWeaponMaster::Fire()
 		UDamageType::StaticClass()
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("[Fire] ApplyPointDamage -> %.1f to %s"), CurrentDamage, *HitActor->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("[Fire] Magazine=%d / Reserve=%d"),
+		CurrentMagazineAmmo, CurrentAmmo);
 }
 
 void AEquipWeaponMaster::StartFire()
