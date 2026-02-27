@@ -63,7 +63,6 @@ void AHJ_PlayerController::BeginPlay()
     }
     else
     {
-        // 메뉴 레벨이 아닐 경우(실제 게임 레벨) 게임 HUD 표시
         ShowGameHUD();
     }
 }
@@ -267,7 +266,6 @@ void AHJ_PlayerController::ShowGameHUD()
             bShowMouseCursor = false;
             SetInputMode(FInputModeGameOnly());
 
-            // ✅ 수정됨: HUD가 켜진 직후에 GameState를 가져와 최신 UI 정보를 갱신합니다.
             if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
             {
                 GS->UpDateHUD();

@@ -30,15 +30,12 @@ void AHJ_GameState::SetBattleState(EBattleState NewState)
 
 void AHJ_GameState::UpDateHUD()
 {
-	// 1. PlayerController 가져오기
 	AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC) return;
 
-	// 2. HUD 인스턴스 가져오기
 	UUserWidget* HUDWidget = PC->GetHUDWidget();
 	if (!HUDWidget) return;
 
-	// 3. 텍스트 블록 찾기 ("Wave"라는 이름의 TextBlock이 WBP에 있어야 함)
 	UTextBlock* WaveText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Wave")));
 	if (WaveText)
 	{

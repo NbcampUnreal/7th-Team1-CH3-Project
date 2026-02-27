@@ -72,13 +72,10 @@ void AHJ_GameMode::HandleDefeat()
         GS->SetBattleState(EBattleState::Defeat);
     }
 
-    // 1) 게임 정지(완전 멈춤)
     UGameplayStatics::SetGamePaused(this, true);
 
-    // PlayerController를 가져와 재시작 메뉴 UI를 띄움
     if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
     {
-        // 내부에서 커서를 보이게 하고 UIOnly 모드로 전환하므로 추가 입력 방지 코드가 불필요해집니다.
         PC->ShowMainMenu(true);
     }
     
