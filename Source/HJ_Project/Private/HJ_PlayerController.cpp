@@ -51,48 +51,35 @@ void AHJ_PlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        // 이동
         if (MoveAction)
-        {
-            EI->BindAction(MoveAction, ETriggerEvent::Triggered,
-                this, &AHJ_PlayerController::Move);
-        }
+            EI->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AHJ_PlayerController::Move);
 
-        // 시점 회전
         if (LookAction)
-        {
-            EI->BindAction(LookAction, ETriggerEvent::Triggered,
-                this, &AHJ_PlayerController::Look);
-        }
+            EI->BindAction(LookAction, ETriggerEvent::Triggered, this, &AHJ_PlayerController::Look);
 
-        // 점프
         if (JumpAction)
         {
-            EI->BindAction(JumpAction, ETriggerEvent::Started,
-                this, &AHJ_PlayerController::StartJump);
-
-            EI->BindAction(JumpAction, ETriggerEvent::Completed,
-                this, &AHJ_PlayerController::StopJump);
+            EI->BindAction(JumpAction, ETriggerEvent::Started, this, &AHJ_PlayerController::StartJump);
+            EI->BindAction(JumpAction, ETriggerEvent::Completed, this, &AHJ_PlayerController::StopJump);
         }
 
-        // 발사
         if (FireAction)
         {
-            EI->BindAction(FireAction, ETriggerEvent::Started,
-                this, &AHJ_PlayerController::StartFire);
-
-            EI->BindAction(FireAction, ETriggerEvent::Completed,
-                this, &AHJ_PlayerController::StopFire);
+            EI->BindAction(FireAction, ETriggerEvent::Started, this, &AHJ_PlayerController::StartFire);
+            EI->BindAction(FireAction, ETriggerEvent::Completed, this, &AHJ_PlayerController::StopFire);
         }
 
-        // 견착
         if (AimAction)
         {
-            EI->BindAction(AimAction, ETriggerEvent::Started,
-                this, &AHJ_PlayerController::StartAim);
+            EI->BindAction(AimAction, ETriggerEvent::Started, this, &AHJ_PlayerController::StartAim);
+            EI->BindAction(AimAction, ETriggerEvent::Completed, this, &AHJ_PlayerController::StopAim);
+        }
 
-            EI->BindAction(AimAction, ETriggerEvent::Completed,
-                this, &AHJ_PlayerController::StopAim);
+        /* 🔥 Reload 바인딩 */
+        if (ReloadAction)
+        {
+            EI->BindAction(ReloadAction, ETriggerEvent::Started,
+                this, &AHJ_PlayerController::Reload);
         }
     }
 }
@@ -179,4 +166,12 @@ void AHJ_PlayerController::StopAim(const FInputActionValue& Value)
     {
         CrosshairWidget->SetVisibility(ESlateVisibility::Hidden);
     }
+}
+
+void AHJ_PlayerController::Reload(const FInputActionValue& Value)
+{
+    AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn());
+    if (!MyPlayer) return;
+
+    MyPlayer->ReloadWeapon();   // 🔥 Player → Weapon → Reload()
 }
