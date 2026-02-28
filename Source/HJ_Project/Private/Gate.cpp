@@ -1,7 +1,9 @@
-#include "Gate.h"
+﻿#include "Gate.h"
 #include "Engine/DamageEvents.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "HJ_GameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "AI/AiEnemyCharacter.h"
 
 AGate::AGate()
@@ -104,6 +106,12 @@ float AGate::TakeDamage(
 		CurrentAttackers = 0;
 
 		Destroy();
+
+		AHJ_GameMode* GameMode = Cast<AHJ_GameMode>(UGameplayStatics::GetGameMode(this));
+		if (GameMode)
+		{
+			GameMode->HandleDefeat();
+		}
 	}
 
 	return ActualDamage;

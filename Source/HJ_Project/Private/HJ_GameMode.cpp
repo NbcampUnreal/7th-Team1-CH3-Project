@@ -1,4 +1,4 @@
-﻿#include "HJ_GameMode.h"
+#include "HJ_GameMode.h"
 #include "HJ_GameState.h"
 #include "HJ_Player.h"
 #include "HJ_PlayerController.h"
