@@ -24,6 +24,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	UDataTable* WaveDataTable;
+	UPROPERTY(EditAnywhere, Category = "Wave")
+	int32 MaxWave = 3;
 
 private:
 	UPROPERTY()
@@ -43,6 +45,8 @@ public:
 	void OnZombieKilled();
 	void HandleDefeat();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_OnVictory();
 	UFUNCTION(BlueprintImplementableEvent)
 	void BP_OnDefeat();
 };

@@ -101,6 +101,20 @@ void AHJ_GameMode::OnZombieKilled()
 
 void AHJ_GameMode::EndWave()
 {
+	if (CurrentWave >= MaxWave)
+	{
+		AHJ_GameState* GS = GetGameState<AHJ_GameState>();
+		if (GS)
+		{
+			GS->SetBattleState(EBattleState::Victory);
+		}
+
+		UGameplayStatics::SetGamePaused(this, true);
+
+		BP_OnVictory();
+		return;
+	}
+
 	StartPreparation();
 }
 
