@@ -7,7 +7,6 @@
 class USpringArmComponent;
 class UCameraComponent;
 class AEquipWeaponMaster;
-class UAnimMontage;
 
 UCLASS()
 class HJ_PROJECT_API AHJ_Player : public ACharacter
@@ -46,9 +45,6 @@ public:
     UFUNCTION(BlueprintCallable)
     void ReloadWeapon();
 
-    UFUNCTION()
-    void FinishReload();
-
     /* ================= Camera ================= */
 
 protected:
@@ -71,11 +67,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     bool bHasWeapon = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-    UAnimMontage* ReloadMontage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-    UAnimMontage* FireMontage;
     /* ================= Stat ================= */
 
     UPROPERTY(EditAnywhere, Category = "Stat")
@@ -160,19 +151,14 @@ public:
     float NormalArmLength = 420.f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    float AimArmLength = 240.f;
+    float AimArmLength = 160.f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     FVector NormalSocketOffset = FVector(0.f, 55.f, 70.f);
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    FVector AimSocketOffset = FVector(0.f, 65.f, 90.f);
+    FVector AimSocketOffset = FVector(0.f, 75.f, 72.f);
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float CameraInterpSpeed = 15.f;
-    // 장전 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-    bool bIsReloading = false;
-
-    FTimerHandle ReloadTimerHandle;
 };
