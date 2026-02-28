@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -120,6 +120,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
 	void BP_OnDeath();
 	//사망 애니/이펙트/드롭 등 BP에서 처리
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Enemy|Events")
+	void BP_OnAttack();
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
 	void StartStun();
