@@ -1,4 +1,4 @@
-#include "AI/AiEnemyController.h"
+﻿#include "AI/AiEnemyController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/AiEnemyCharacter.h"               
 #include "Gate.h"                         
@@ -246,6 +246,8 @@ void AAiEnemyController::TickAttack()
 			return;
 		}
 
+		MyZombie->BP_OnAttack();
+
 		UGameplayStatics::ApplyDamage(
 			TargetGate,
 			MyZombie->AttackDamage,
@@ -261,6 +263,8 @@ void AAiEnemyController::TickAttack()
 	if (CurrentState == EAIState::AttackingPlayer)
 	{
 		if (!IsValid(TargetPlayer)) return;
+
+		MyZombie->BP_OnAttack();
 
 		UGameplayStatics::ApplyDamage(
 			TargetPlayer,

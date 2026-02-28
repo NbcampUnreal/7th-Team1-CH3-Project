@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -19,11 +19,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	// 웨이브 시작
-	void StartWave(int32 WaveNumber);
-
-	// 다음 웨이브
-	void NextWave();
+	void SpawnWave(int32 WaveNumber);
 
 protected:
 
@@ -33,18 +29,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	UDataTable* WaveDataTable;
 
-	//호드메니져 연결
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Horde")
 	TObjectPtr<AHordeManager> HordeManager = nullptr;
 
 private:
 
-	int32 CurrentWave;
-
-	FTimerHandle WaveTimer;
-
 	FZombieSpawnRow* FindWave(int32 WaveNumber);
-
 	FVector GetRandomPointInBox() const;
 };
