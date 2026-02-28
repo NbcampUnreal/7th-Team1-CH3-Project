@@ -1,13 +1,13 @@
-﻿#include "AI/AiEnemyCharacter.h"
+
+#include "AI/AiEnemyCharacter.h"
 #include "AI/HordeManager.h"
-#include "AI/AiEnemyController.h"
-#include "Gate.h"
+#include "AI/AiEnemyController.h"          // AI 멈추기용
+#include "Gate.h"                     // 게이트 슬롯 해제용
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Engine/DamageEvents.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "HJ_GameMode.h"
+#include "TimerManager.h"
 
 AAiEnemyCharacter::AAiEnemyCharacter()
 {
@@ -119,7 +119,7 @@ float AAiEnemyCharacter::TakeDamage(
         }
         else if (AppliedDamage >= MinDamageToStun)
         {
-            bShouldStun = true; 
+            bShouldStun = true;
         }
     }
 
@@ -182,7 +182,6 @@ void AAiEnemyCharacter::EndStun()
 //사망처리
 void AAiEnemyCharacter::Die()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Die Called"));
     if (bIsDead) return;
     bIsDead = true;
 
@@ -223,14 +222,6 @@ void AAiEnemyCharacter::Die()
     {
         OwnerHorde->NotifyZombieDied(this);
     }
-
-    // GameMode에 웨이브 카운트 알림
-    if (AHJ_GameMode* GM =
-        Cast<AHJ_GameMode>(UGameplayStatics::GetGameMode(GetWorld())))
-    {
-        GM->OnZombieKilled();
-    }
-
 
     BP_OnDeath();
     // BP에서 사망 애니/이펙트

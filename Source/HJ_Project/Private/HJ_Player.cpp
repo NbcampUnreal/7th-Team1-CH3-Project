@@ -5,7 +5,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
-#include "Animation/AnimInstance.h"
 #include "Engine/DamageEvents.h"
 
 AHJ_Player::AHJ_Player()
@@ -152,20 +151,9 @@ void AHJ_Player::EquipWeapon()
 
 void AHJ_Player::StartFire()
 {
-    if (bIsReloading) return;  
-
     if (CurrentWeapon && bHasWeapon)
         CurrentWeapon->StartFire();
-
-    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
-    {
-        if (FireMontage)
-        {
-            Anim->Montage_Play(FireMontage);
-        }
-    }
 }
-
 
 void AHJ_Player::StopFire()
 {
@@ -280,51 +268,8 @@ float AHJ_Player::TakeDamage(
 
 void AHJ_Player::ReloadWeapon()
 {
-    if (!CurrentWeapon || !bHasWeapon) return;
-    if (bIsReloading) return;
-
-    bIsReloading = true;
-
-    UE_LOG(LogTemp, Warning, TEXT("Reload Start"));
-
-    SetAimMode(false);
-
-    GetCharacterMovement()->DisableMovement();
-
-    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+    if (CurrentWeapon && bHasWeapon)
     {
-        if (ReloadMontage)
-        {
-            Anim->Montage_Play(ReloadMontage);
-        }
+        CurrentWeapon->Reload();
     }
-
-    float ReloadTime = 0.f;
-
-    if (ReloadMontage)
-    {
-        ReloadTime = ReloadMontage->GetPlayLength();
-    }
-
-    GetWorldTimerManager().SetTimer(
-        ReloadTimerHandle,
-        this,
-        &AHJ_Player::FinishReload,
-        ReloadTime,
-        false
-    );
-}
-
-void AHJ_Player::FinishReload()
-{
-    UE_LOG(LogTemp, Warning, TEXT("Reload Finish"));
-
-    if (CurrentWeapon)
-    {
-        CurrentWeapon->Reload(); 
-    }
-
-    bIsReloading = false;
-
-    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
