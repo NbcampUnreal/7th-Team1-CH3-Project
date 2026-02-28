@@ -22,20 +22,27 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Wave")
 	float TimeBetweenWaves;
 
+	UPROPERTY(EditAnywhere, Category = "Wave")
+	UDataTable* WaveDataTable;
+
+private:
+	UPROPERTY()
+	TArray<AHJ_SpawnZombie*> SpawnZombieActors;
+
+	int32 CurrentWave = 0;
+	int32 AliveZombieCount = 0;
+
+	FTimerHandle WaveTimerHandle;
+	bool bIsDefeatHandled = false;
+
 	void StartPreparation();
 	void StartWave();
 	void EndWave();
-	bool bIsDefeatHandled = false;
-
-	UPROPERTY(EditAnywhere, Category = "Spawn")
-	AHJ_SpawnZombie* SpawnZombieActor;
-
-	UPROPERTY(EditAnywhere, Category = "Wave")
-	UDataTable* WaveDataTable;
 
 public:
 	void OnZombieKilled();
 	void HandleDefeat();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void BP_OnDefeat();
 };
