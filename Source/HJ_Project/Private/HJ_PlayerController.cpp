@@ -231,10 +231,9 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
 
         AHJ_GameState* GS = GetWorld() ? GetWorld()->GetGameState<AHJ_GameState>() : nullptr;
 
-        // "TitleText"라는 이름의 텍스트 블록을 찾아서 상태에 따라 글자를 바꿉니다.
         if (UTextBlock* TitleText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle"))))
         {
-            if (bIsRestart) // 죽거나 웨이브를 모두 클리어해서 메뉴가 떴을 때
+            if (bIsRestart)
             {
                 if (GS && GS->BattleState == EBattleState::Victory)
                 {
@@ -245,9 +244,9 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
                     TitleText->SetText(FText::FromString(TEXT("함락되었습니다")));
                 }
             }
-            else // 처음에 게임을 켰을 때
+            else
             {
-                TitleText->SetText(FText::FromString(TEXT("Hell 조선"))); // 원하는 게임 제목
+                TitleText->SetText(FText::FromString(TEXT("Hell 조선")));
             }
         }
 
@@ -293,8 +292,6 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             }
         }
 
-        // 2. 다른 TextBlock(예: 게임 제목 텍스트)의 위치 변경
-        // 블루프린트 위젯에서 해당 TextBlock의 이름을 "TitleText"라고 지었다고 가정합니다.
         if (UWidget* TitleTextWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle")))
         {
             if (UCanvasPanelSlot* TitleSlot = Cast<UCanvasPanelSlot>(TitleTextWidget->Slot))
