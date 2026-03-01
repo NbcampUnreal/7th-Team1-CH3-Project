@@ -229,6 +229,28 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             SetInputMode(FInputModeUIOnly());
         }
 
+        AHJ_GameState* GS = GetWorld() ? GetWorld()->GetGameState<AHJ_GameState>() : nullptr;
+
+        // "TitleText"라는 이름의 텍스트 블록을 찾아서 상태에 따라 글자를 바꿉니다.
+        if (UTextBlock* TitleText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle"))))
+        {
+            if (bIsRestart) // 죽거나 웨이브를 모두 클리어해서 메뉴가 떴을 때
+            {
+                if (GS && GS->BattleState == EBattleState::Victory)
+                {
+                    TitleText->SetText(FText::FromString(TEXT("승전!")));
+                }
+                else
+                {
+                    TitleText->SetText(FText::FromString(TEXT("함락되었습니다")));
+                }
+            }
+            else // 처음에 게임을 켰을 때
+            {
+                TitleText->SetText(FText::FromString(TEXT("Hell 조선"))); // 원하는 게임 제목
+            }
+        }
+
         if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
         {
             if (bIsRestart)
@@ -241,18 +263,17 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             }
         }
 
-        // 1. StartButton의 위치 변경
         if (UWidget* ButtonWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButton")))
         {
             if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
             {
-                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                if (bIsRestart)
                 {
-                    ButtonSlot->SetPosition(FVector2D(961.f, 732.f)); // 원하는 X, Y 좌표 입력
+                    ButtonSlot->SetPosition(FVector2D(961.f, 732.f));
                 }
-                else // 처음 시작할 때
+                else
                 {
-                    ButtonSlot->SetPosition(FVector2D(285.f, 724.f)); // 원하는 X, Y 좌표 입력
+                    ButtonSlot->SetPosition(FVector2D(285.f, 724.f));
                 }
             }
         }
@@ -261,13 +282,13 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
         {
             if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
             {
-                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                if (bIsRestart)
                 {
-                    ButtonSlot->SetPosition(FVector2D(961.f, 912.f)); // 원하는 X, Y 좌표 입력
+                    ButtonSlot->SetPosition(FVector2D(961.f, 912.f));
                 }
-                else // 처음 시작할 때
+                else
                 {
-                    ButtonSlot->SetPosition(FVector2D(285.f, 887.f)); // 원하는 X, Y 좌표 입력
+                    ButtonSlot->SetPosition(FVector2D(285.f, 887.f));
                 }
             }
         }
@@ -278,13 +299,13 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
         {
             if (UCanvasPanelSlot* TitleSlot = Cast<UCanvasPanelSlot>(TitleTextWidget->Slot))
             {
-                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                if (bIsRestart)
                 {
-                    TitleSlot->SetPosition(FVector2D(961.f, 172.f)); // 원하는 X, Y 좌표 입력
+                    TitleSlot->SetPosition(FVector2D(961.f, 172.f));
                 }
-                else // 처음 시작할 때
+                else
                 {
-                    TitleSlot->SetPosition(FVector2D(290.f, 152.f)); // 원하는 X, Y 좌표 입력
+                    TitleSlot->SetPosition(FVector2D(290.f, 152.f));
                 }
             }
         }
