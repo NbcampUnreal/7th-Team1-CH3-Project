@@ -1,12 +1,14 @@
 ﻿#include "HJ_Player.h"
-#include "Camera/CameraComponent.h"
+#include "HJ_GameMode.h"
 #include "EquipWeaponMaster.h"
+#include "Engine/DamageEvents.h"
+#include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
+#include "GameFramework/Controller.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
-#include "Animation/AnimInstance.h"
-#include "Engine/DamageEvents.h"
 
 AHJ_Player::AHJ_Player()
 {
@@ -273,6 +275,11 @@ float AHJ_Player::TakeDamage(
         bIsDead = true;
         GetCharacterMovement()->DisableMovement();
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (AHJ_GameMode* GM = Cast<AHJ_GameMode>(UGameplayStatics::GetGameMode(this)))
+        {
+            GM->HandleDefeat();
+        }
     }
 
     return AppliedDamage;

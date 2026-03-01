@@ -8,10 +8,11 @@
 #include "InputActionValue.h"
 #include "HJ_GameState.h"
 #include "HJ_Player.h"
+#include "Components/CanvasPanelSlot.h"
 
 AHJ_PlayerController::AHJ_PlayerController() : 
-    CrosshairWidget(nullptr),
     HUDWidgetClass(nullptr),
+    CrosshairWidget(nullptr),
     HUDWidgetInstance(nullptr),
     MainMenuWidgetClass(nullptr),
     MainMenuWidgetInstance(nullptr)
@@ -237,6 +238,54 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             else
             {
                 ButtonText->SetText(FText::FromString(TEXT("시작")));
+            }
+        }
+
+        // 1. StartButton의 위치 변경
+        if (UWidget* ButtonWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButton")))
+        {
+            if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
+            {
+                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                {
+                    ButtonSlot->SetPosition(FVector2D(961.f, 732.f)); // 원하는 X, Y 좌표 입력
+                }
+                else // 처음 시작할 때
+                {
+                    ButtonSlot->SetPosition(FVector2D(285.f, 724.f)); // 원하는 X, Y 좌표 입력
+                }
+            }
+        }
+
+        if (UWidget* ButtonWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("EndButton")))
+        {
+            if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
+            {
+                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                {
+                    ButtonSlot->SetPosition(FVector2D(961.f, 912.f)); // 원하는 X, Y 좌표 입력
+                }
+                else // 처음 시작할 때
+                {
+                    ButtonSlot->SetPosition(FVector2D(285.f, 887.f)); // 원하는 X, Y 좌표 입력
+                }
+            }
+        }
+
+        // 2. 다른 TextBlock(예: 게임 제목 텍스트)의 위치 변경
+        // 블루프린트 위젯에서 해당 TextBlock의 이름을 "TitleText"라고 지었다고 가정합니다.
+        if (UWidget* TitleTextWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle")))
+        {
+            if (UCanvasPanelSlot* TitleSlot = Cast<UCanvasPanelSlot>(TitleTextWidget->Slot))
+            {
+                if (bIsRestart) // 죽거나 웨이브가 끝났을 때
+                {
+                    TitleSlot->SetPosition(FVector2D(961.f, 172.f)); // 원하는 X, Y 좌표 입력
+                }
+                else // 처음 시작할 때
+                {
+                    TitleSlot->SetPosition(FVector2D(290.f, 152.f)); // 원하는 X, Y 좌표 입력
+                }
             }
         }
     }

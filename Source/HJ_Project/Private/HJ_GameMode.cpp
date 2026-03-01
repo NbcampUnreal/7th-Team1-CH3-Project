@@ -109,6 +109,10 @@ void AHJ_GameMode::EndWave()
 			GS->SetBattleState(EBattleState::Victory);
 		}
 
+		if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(GetWorld()->GetFirstPlayerController()))
+		{
+			PC->ShowMainMenu(true);
+		}
 		UGameplayStatics::SetGamePaused(this, true);
 
 		BP_OnVictory();
