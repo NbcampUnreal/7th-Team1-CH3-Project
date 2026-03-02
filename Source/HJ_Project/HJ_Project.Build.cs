@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -19,7 +19,8 @@ public class HJ_Project : ModuleRules
             "GameplayStateTreeModule",
             "UMG",
             "PhysicsCore",
-            "Slate"
+            "Slate",
+            "Niagara"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
