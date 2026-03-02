@@ -1,12 +1,16 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Sound/SoundBase.h"
 #include "EquipWeaponMaster.generated.h"
 
 class USceneComponent;
 class UArrowComponent;
 class APlayerController;
+class UNiagaraSystem;
+
+
 
 
 //탄이 없을 때 발사 막기
@@ -42,6 +46,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Ammo")
 	virtual void Reload();
 
+
+	//사운드
+	UFUNCTION(BlueprintPure, Category = "Weapon|SFX")
+	USoundBase* GetReloadSound() const { return ReloadSound2D; }
+
 protected:
 	//Tick 에서 반동 복구
 	virtual void BeginPlay() override;
@@ -58,6 +67,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UArrowComponent* Muzzle;
+
+	//VFX
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|VFX")
+	TObjectPtr<UNiagaraSystem> MuzzleFlashNiagara = nullptr;
+
 
 	/* ================= Weapon Stat ================= */
 
@@ -89,6 +103,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|State")
 	bool bIsReloading = false;
 
+	//총기 사운드
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|SFX")
+	TObjectPtr<USoundBase> FireSound2D = nullptr;
+
+	//리로딩 사운드
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|SFX")
+	TObjectPtr<USoundBase> ReloadSound2D = nullptr;
+
+
 	/* ================= Debug ================= */
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
@@ -101,6 +124,10 @@ protected:
 	bool bDrawMuzzleDebug = true;
 
 	FTimerHandle FireTimerHandle;
+
+	FTimerHandle ReloadTimerHandle;//장전완료 
+
+	
 
 
 	//탄 (45발 예비탄 무한)
