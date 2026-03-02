@@ -5,8 +5,11 @@
 #include "Components/ArrowComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/DamageType.h"
+#include "Sound/SoundBase.h"
 #include "DrawDebugHelpers.h"
 #include "Math/UnrealMathUtility.h"//반동/스프레드 각도 계산용
 
@@ -64,7 +67,8 @@ FVector AEquipWeaponMaster::GetMuzzleLocation() const
 //탄약
 bool AEquipWeaponMaster::CanFire() const
 {
-	return CurrentAmmoInMag > 0;
+	//장전 중에는 발사 불가
+	return CurrentAmmoInMag > 0 && !bIsReloading;
 }
 
 void AEquipWeaponMaster::ConsumeAmmo()
@@ -72,11 +76,22 @@ void AEquipWeaponMaster::ConsumeAmmo()
 	CurrentAmmoInMag = FMath::Max(0, CurrentAmmoInMag - 1);
 }
 
+//;리로딩
 void AEquipWeaponMaster::Reload()
 {
 	// 예비탄 무한이라 그냥 탄창만 채움
 	CurrentAmmoInMag = MaxAmmoInMag;
 }
+
+//장전 완료처리
+void AEquipWeaponMaster::FinishReload()
+{
+	// 예비탄 무한이라 그냥 탄창만 채움
+	CurrentAmmoInMag = MaxAmmoInMag;
+
+	bIsReloading = false;
+}
+
 
 void AEquipWeaponMaster::ResetBurst()
 {
@@ -158,6 +173,29 @@ void AEquipWeaponMaster::Fire()
 		Player->UpDateAmmoHUD();
 	}
 	IncreaseSpread();  //연사할수록 스프레드 누적
+
+
+	//총기사운드
+	if (FireSound2D)
+	{
+		UGameplayStatics::PlaySound2D(this, FireSound2D);
+	}
+
+
+	//총구화염
+	if (Muzzle && MuzzleFlashNiagara)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			MuzzleFlashNiagara,
+			Muzzle,                 // ArrowComponent에 붙임
+			NAME_None,              // 소켓 없음 (Arrow라서)
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			true                    // 자동 삭제
+		);
+	}
+
 
 
 	// 0) 현재 무기 데미지 체크

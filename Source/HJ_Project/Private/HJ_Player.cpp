@@ -1,5 +1,6 @@
 ﻿#include "HJ_Player.h"
 #include "HJ_GameMode.h"
+#include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
 #include "Engine/DamageEvents.h"
 #include "HJ_PlayerController.h"
@@ -297,8 +298,8 @@ void AHJ_Player::ReloadWeapon()
 
     UE_LOG(LogTemp, Warning, TEXT("Reload Start"));
 
-    SetAimMode(false);
 
+    SetAimMode(false);
     GetCharacterMovement()->DisableMovement();
 
     if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
