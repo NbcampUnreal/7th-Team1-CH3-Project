@@ -1,4 +1,4 @@
-#include "EquipWeaponMaster.h"
+﻿#include "EquipWeaponMaster.h"
 #include "HJ_Player.h"
 #include "TimerManager.h"
 #include "Components/SceneComponent.h"
@@ -152,7 +152,13 @@ void AEquipWeaponMaster::Fire()
 	}
 
 	ConsumeAmmo();     //발사 시 탄 1발 소모
+	UE_LOG(LogTemp, Warning, TEXT("현재 총알: %d"), CurrentAmmo);
+	if (AHJ_Player* Player = Cast<AHJ_Player>(GetOwner()))
+	{
+		Player->UpDateAmmoHUD();
+	}
 	IncreaseSpread();  //연사할수록 스프레드 누적
+
 
 	// 0) 현재 무기 데미지 체크
 	UE_LOG(LogTemp, Warning, TEXT("[Fire] CurrentDamage=%.1f Ammo=%d/%d"), CurrentDamage, CurrentAmmoInMag, MaxAmmoInMag);

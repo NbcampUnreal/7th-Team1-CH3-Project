@@ -102,6 +102,7 @@ protected:
 
 	FTimerHandle FireTimerHandle;
 
+public:
 
 	//탄 (45발 예비탄 무한)
 
@@ -114,6 +115,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
 	bool bInfiniteReserveAmmo = true;//예비탄 무한
 	
+protected:
 
 	//탄이 없을 때 발사 막기
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Ammo")

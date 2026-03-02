@@ -339,6 +339,11 @@ void AHJ_PlayerController::ShowGameHUD()
             {
                 GS->UpDateHUD();
             }
+
+            if (AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn()))
+            {
+                MyPlayer->UpDateAmmoHUD();
+            }
         }
         
     }
