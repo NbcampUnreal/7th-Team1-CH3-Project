@@ -66,6 +66,10 @@ void AHJ_GameMode::StartWave()
 	GS->SetBattleState(EBattleState::InBattle);
 
 	CurrentWave++;
+
+	// GameState에게 바뀐 웨이브 숫자를 알려주고 UI를 업데이트
+	GS->SetWave(CurrentWave);
+
 	FZombieSpawnRow* Row =
 		WaveDataTable->FindRow<FZombieSpawnRow>(
 			FName(*FString::FromInt(CurrentWave)),
@@ -109,6 +113,10 @@ void AHJ_GameMode::EndWave()
 			GS->SetBattleState(EBattleState::Victory);
 		}
 
+		if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(GetWorld()->GetFirstPlayerController()))
+		{
+			PC->ShowMainMenu(true);
+		}
 		UGameplayStatics::SetGamePaused(this, true);
 
 		BP_OnVictory();

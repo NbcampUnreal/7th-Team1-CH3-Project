@@ -8,10 +8,11 @@
 #include "InputActionValue.h"
 #include "HJ_GameState.h"
 #include "HJ_Player.h"
+#include "Components/CanvasPanelSlot.h"
 
 AHJ_PlayerController::AHJ_PlayerController() : 
-    CrosshairWidget(nullptr),
     HUDWidgetClass(nullptr),
+    CrosshairWidget(nullptr),
     HUDWidgetInstance(nullptr),
     MainMenuWidgetClass(nullptr),
     MainMenuWidgetInstance(nullptr)
@@ -228,6 +229,27 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             SetInputMode(FInputModeUIOnly());
         }
 
+        AHJ_GameState* GS = GetWorld() ? GetWorld()->GetGameState<AHJ_GameState>() : nullptr;
+
+        if (UTextBlock* TitleText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle"))))
+        {
+            if (bIsRestart)
+            {
+                if (GS && GS->BattleState == EBattleState::Victory)
+                {
+                    TitleText->SetText(FText::FromString(TEXT("승전!")));
+                }
+                else
+                {
+                    TitleText->SetText(FText::FromString(TEXT("함락되었습니다")));
+                }
+            }
+            else
+            {
+                TitleText->SetText(FText::FromString(TEXT("Hell 조선")));
+            }
+        }
+
         if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
         {
             if (bIsRestart)
@@ -237,6 +259,51 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
             else
             {
                 ButtonText->SetText(FText::FromString(TEXT("시작")));
+            }
+        }
+
+        if (UWidget* ButtonWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButton")))
+        {
+            if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
+            {
+                if (bIsRestart)
+                {
+                    ButtonSlot->SetPosition(FVector2D(961.f, 732.f));
+                }
+                else
+                {
+                    ButtonSlot->SetPosition(FVector2D(285.f, 724.f));
+                }
+            }
+        }
+
+        if (UWidget* ButtonWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("EndButton")))
+        {
+            if (UCanvasPanelSlot* ButtonSlot = Cast<UCanvasPanelSlot>(ButtonWidget->Slot))
+            {
+                if (bIsRestart)
+                {
+                    ButtonSlot->SetPosition(FVector2D(961.f, 912.f));
+                }
+                else
+                {
+                    ButtonSlot->SetPosition(FVector2D(285.f, 887.f));
+                }
+            }
+        }
+
+        if (UWidget* TitleTextWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("GameTitle")))
+        {
+            if (UCanvasPanelSlot* TitleSlot = Cast<UCanvasPanelSlot>(TitleTextWidget->Slot))
+            {
+                if (bIsRestart)
+                {
+                    TitleSlot->SetPosition(FVector2D(961.f, 172.f));
+                }
+                else
+                {
+                    TitleSlot->SetPosition(FVector2D(290.f, 152.f));
+                }
             }
         }
     }
@@ -271,6 +338,11 @@ void AHJ_PlayerController::ShowGameHUD()
             if (AHJ_GameState* GS = GetWorld()->GetGameState<AHJ_GameState>())
             {
                 GS->UpDateHUD();
+            }
+
+            if (AHJ_Player* MyPlayer = Cast<AHJ_Player>(GetPawn()))
+            {
+                MyPlayer->UpDateAmmoHUD();
             }
         }
         

@@ -49,6 +49,8 @@ public:
     UFUNCTION()
     void FinishReload();
 
+    void UpDateAmmoHUD();
+
     /* ================= Camera ================= */
 
 protected:

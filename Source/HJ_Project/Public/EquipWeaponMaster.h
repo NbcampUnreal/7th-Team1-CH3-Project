@@ -125,13 +125,11 @@ protected:
 
 	FTimerHandle FireTimerHandle;
 
+public:
+
 	FTimerHandle ReloadTimerHandle;//장전완료 
 
-	
-
-
 	//탄 (45발 예비탄 무한)
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
 	int32 MaxAmmoInMag = 45; //탄창 최대치
 
@@ -141,6 +139,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
 	bool bInfiniteReserveAmmo = true;//예비탄 무한
 	
+protected:
 
 	//탄이 없을 때 발사 막기
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Ammo")

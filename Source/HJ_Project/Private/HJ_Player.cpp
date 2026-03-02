@@ -1,13 +1,18 @@
-#include "HJ_Player.h"
+﻿#include "HJ_Player.h"
+#include "HJ_GameMode.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
+#include "Engine/DamageEvents.h"
+#include "HJ_PlayerController.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
+#include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
+#include "GameFramework/Controller.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFramework/Controller.h"
-#include "Animation/AnimInstance.h"
-#include "Engine/DamageEvents.h"
 
 AHJ_Player::AHJ_Player()
 {
@@ -274,6 +279,11 @@ float AHJ_Player::TakeDamage(
         bIsDead = true;
         GetCharacterMovement()->DisableMovement();
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (AHJ_GameMode* GM = Cast<AHJ_GameMode>(UGameplayStatics::GetGameMode(this)))
+        {
+            GM->HandleDefeat();
+        }
     }
 
     return AppliedDamage;
@@ -328,4 +338,27 @@ void AHJ_Player::FinishReload()
     bIsReloading = false;
 
     GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+    UpDateAmmoHUD();
+}
+
+void AHJ_Player::UpDateAmmoHUD()
+{
+    // 무기를 들고 있지 않다면 띄우지 않음
+    if (!CurrentWeapon) return;
+
+    AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(GetController());
+    if (!PC) return;
+
+    UUserWidget* HUDWidget = PC->GetHUDWidget();
+    if (!HUDWidget) return;
+
+    // 블루프린트에서 "AmmoText"라는 이름의 TextBlock을 찾습니다.
+    UTextBlock* AmmoText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("AmmoText")));
+    if (AmmoText)
+    {
+        // "탄약 : 30 / 45" 형태로 출력
+        FString AmmoStr = FString::Printf(TEXT("%d / %d"), CurrentWeapon->CurrentAmmoInMag, CurrentWeapon->MaxAmmoInMag);
+        AmmoText->SetText(FText::FromString(AmmoStr));
+    }
 }

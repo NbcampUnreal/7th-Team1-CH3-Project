@@ -1,10 +1,11 @@
 ﻿#include "Gate.h"
-#include "Engine/DamageEvents.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/WidgetComponent.h"
 #include "HJ_GameMode.h"
-#include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
+#include "Engine/DamageEvents.h"
 #include "AI/AiEnemyCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/WidgetComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 AGate::AGate()
 {
@@ -42,6 +43,8 @@ void AGate::BeginPlay()
 	// 공격자 초기화
 	RegisteredAttackers.Empty();
 	CurrentAttackers = 0;
+
+
 }
 
 bool AGate::TryRegisterAttacker(AAiEnemyCharacter* Zombie)
