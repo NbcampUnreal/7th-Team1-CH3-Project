@@ -135,6 +135,19 @@ void AHJ_Player::Tick(float DeltaTime)
 
         SetActorRotation(NewRot);
     }
+    if (Controller)
+    {
+        FRotator ControlRot = Controller->GetControlRotation();
+
+        AimPitch = ControlRot.Pitch;
+
+        if (AimPitch > 180.f)
+        {
+            AimPitch -= 360.f;
+        }
+
+        AimPitch = FMath::Clamp(AimPitch, -60.f, 60.f);
+    }
 }
 
 void AHJ_Player::EquipWeapon()
@@ -158,18 +171,13 @@ void AHJ_Player::EquipWeapon()
 
 void AHJ_Player::StartFire()
 {
-    if (bIsReloading) return;  
+    if (bIsReloading) return;
+    if (!CurrentWeapon || !bHasWeapon) return;
 
-    if (CurrentWeapon && bHasWeapon)
-        CurrentWeapon->StartFire();
+    bUseControllerRotationYaw = true;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
 
-    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
-    {
-        if (FireMontage)
-        {
-            Anim->Montage_Play(FireMontage);
-        }
-    }
+    CurrentWeapon->StartFire();
 }
 
 
@@ -177,6 +185,16 @@ void AHJ_Player::StopFire()
 {
     if (CurrentWeapon && bHasWeapon)
         CurrentWeapon->StopFire();
+    if (bIsAiming)
+    {
+        bUseControllerRotationYaw = true;
+        GetCharacterMovement()->bOrientRotationToMovement = false;
+    }
+    else
+    {
+        bUseControllerRotationYaw = false;
+        GetCharacterMovement()->bOrientRotationToMovement = true;
+    }
 }
 
 void AHJ_Player::SetAimMode(bool bAim)
@@ -197,10 +215,9 @@ void AHJ_Player::SetAimMode(bool bAim)
 //무기 발사 했을 때 호출되는 함수
 void AHJ_Player::AddRecoilImpulse()
 {
-    UE_LOG(LogTemp, Warning, TEXT("[Recoil] AddRecoilImpulse CALLED. Locally=%d Dead=%d Controller=%s"),
         IsLocallyControlled() ? 1 : 0,
         bIsDead ? 1 : 0,
-        Controller ? TEXT("YES") : TEXT("NO"));//로그
+        Controller ? TEXT("YES") : TEXT("NO");//로그
 
     // 내 화면에서만 반동 적용
     if (!IsLocallyControlled()) return;
@@ -226,7 +243,6 @@ void AHJ_Player::AddRecoilImpulse()
 }
 
 
-// 매 프레임 호출해서 반동을 부드럽게 적용하고, 다시 0으로 복구시킴
 void AHJ_Player::TickRecoil(float DeltaSeconds)
 {
     static float Acc = 0.f;
@@ -234,9 +250,8 @@ void AHJ_Player::TickRecoil(float DeltaSeconds)
     if (Acc > 1.0f)
     {
         Acc = 0.f;
-        UE_LOG(LogTemp, Warning, TEXT("[Recoil] TickRecoil running. Locally=%d Controller=%s"),
             IsLocallyControlled() ? 1 : 0,
-            Controller ? TEXT("YES") : TEXT("NO"));
+            Controller ? TEXT("YES") : TEXT("NO");
     }//로그
 
     if (!IsLocallyControlled()) return;
@@ -273,6 +288,11 @@ float AHJ_Player::TakeDamage(
         DamageCauser);
 
     CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.f, MaxHP);
+
+    if (AppliedDamage > 0.f && CurrentHP > 0.f)
+    {
+        PlayHitReaction();
+    }
 
     if (CurrentHP <= 0.f)
     {
@@ -360,5 +380,34 @@ void AHJ_Player::UpDateAmmoHUD()
         // "탄약 : 30 / 45" 형태로 출력
         FString AmmoStr = FString::Printf(TEXT("%d / %d"), CurrentWeapon->CurrentAmmoInMag, CurrentWeapon->MaxAmmoInMag);
         AmmoText->SetText(FText::FromString(AmmoStr));
+    }
+}
+
+void AHJ_Player::PlayHitReaction()
+{
+    if (bIsDead) return;
+    if (bIsReloading) return;   // 장전 중이면 막고 싶으면 유지
+
+    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+    {
+        if (HitReactionMontage)
+        {
+            Anim->Montage_Play(HitReactionMontage);
+        }
+    }
+}
+
+void AHJ_Player::PlayFireAnimation()
+{
+    if (bIsDead || bIsReloading) return;
+
+    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+    {
+        if (FireMontage)
+        {
+            // 기존 재생 중이면 끊고 다시 시작
+            Anim->Montage_Stop(0.05f, FireMontage);
+            Anim->Montage_Play(FireMontage, 1.f);
+        }
     }
 }
