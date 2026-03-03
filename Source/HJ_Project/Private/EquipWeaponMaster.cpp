@@ -153,167 +153,176 @@ void AEquipWeaponMaster::ApplyRecoil(APlayerController* PC)
 
 void AEquipWeaponMaster::Fire()
 {
-	
-	if (!GetWorld()) return;
+    if (!GetWorld()) return;
 
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC) return;
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC) return;
 
-	//탄 없으면 발사 막기 + 연사 중이면 타이머도 끊기
-	if (!CanFire())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Fire] No Ammo in Mag. Reload!"));
-		StopFire();
-		ResetBurst();
-		return;
-	}
+    // 탄 없으면 발사 막기 + 연사 중이면 타이머도 끊기
+    if (!CanFire())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Fire] No Ammo in Mag. Reload!"));
+        StopFire();
+        ResetBurst();
+        return;
+    }
 
-	ConsumeAmmo();     //발사 시 탄 1발 소모
-	UE_LOG(LogTemp, Warning, TEXT("현재 총알: %d"), CurrentAmmo);
-	if (AHJ_Player* Player = Cast<AHJ_Player>(GetOwner()))
-	{
-		Player->UpDateAmmoHUD();
-	}
-	IncreaseSpread();  //연사할수록 스프레드 누적
+    ConsumeAmmo();     // 발사 시 탄 1발 소모
+    UE_LOG(LogTemp, Warning, TEXT("현재 총알: %d"), CurrentAmmo);
 
+    if (AHJ_Player* Player = Cast<AHJ_Player>(GetOwner()))
+    {
+        Player->UpDateAmmoHUD();
+    }
 
-	//총기사운드
-	if (FireSound2D)
-	{
-		UGameplayStatics::PlaySound2D(this, FireSound2D);
-	}
+    IncreaseSpread();  // 연사할수록 스프레드 누적
 
+    // 총기사운드
+    if (FireSound2D)
+    {
+        UGameplayStatics::PlaySound2D(this, FireSound2D);
+    }
 
-	//총구화염
-	if (Muzzle && MuzzleFlashNiagara)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAttached(
-			MuzzleFlashNiagara,
-			Muzzle,                 // ArrowComponent에 붙임
-			NAME_None,              // 소켓 없음 (Arrow라서)
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget,
-			true                    // 자동 삭제
-		);
-	}
+    // 총구화염
+    if (Muzzle && MuzzleFlashNiagara)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAttached(
+            MuzzleFlashNiagara,
+            Muzzle,
+            NAME_None,
+            FVector::ZeroVector,
+            FRotator::ZeroRotator,
+            EAttachLocation::SnapToTarget,
+            true
+        );
+    }
 
+    UE_LOG(LogTemp, Warning, TEXT("[Fire] CurrentDamage=%.1f Ammo=%d/%d"),
+        CurrentDamage, CurrentAmmoInMag, MaxAmmoInMag);
 
+    FVector CamLoc;
+    FRotator CamRot;
+    PC->GetPlayerViewPoint(CamLoc, CamRot);
 
-	// 0) 현재 무기 데미지 체크
-	UE_LOG(LogTemp, Warning, TEXT("[Fire] CurrentDamage=%.1f Ammo=%d/%d"), CurrentDamage, CurrentAmmoInMag, MaxAmmoInMag);
+    const FVector CamForward = CamRot.Vector();
+    const FVector CamStart = CamLoc + CamForward * 30.f;
+    const FVector CamEnd = CamStart + CamForward * TraceDistance;
 
-	FVector CamLoc;
-	FRotator CamRot;
-	PC->GetPlayerViewPoint(CamLoc, CamRot);
+    FHitResult CamHit;
+    FCollisionQueryParams CamParams(SCENE_QUERY_STAT(CameraTrace), true);
+    CamParams.AddIgnoredActor(this);
+    CamParams.AddIgnoredActor(GetOwner());
 
-	const FVector CamForward = CamRot.Vector();
-	const FVector CamStart = CamLoc + CamForward * 30.f;
-	const FVector CamEnd = CamStart + CamForward * TraceDistance;
+    const bool bCamHit = GetWorld()->LineTraceSingleByChannel(
+        CamHit, CamStart, CamEnd, ECC_Visibility, CamParams);
 
-	FHitResult CamHit;
-	FCollisionQueryParams CamParams(SCENE_QUERY_STAT(CameraTrace), true);
-	CamParams.AddIgnoredActor(this);
-	CamParams.AddIgnoredActor(GetOwner());
+    const FVector AimPoint = bCamHit ? CamHit.ImpactPoint : CamEnd;
 
-	const bool bCamHit = GetWorld()->LineTraceSingleByChannel(
-		CamHit, CamStart, CamEnd, ECC_Visibility, CamParams);
+    // 2) 총구에서 AimPoint 방향으로 실제 발사
+    const FVector MuzzleLoc = GetMuzzleLocation();
+    FVector ShotDir = (AimPoint - MuzzleLoc).GetSafeNormal();
 
-	const FVector AimPoint = bCamHit ? CamHit.ImpactPoint : CamEnd;
+    // 스프레드 적용
+    if (CurrentSpreadDeg > KINDA_SMALL_NUMBER)
+    {
+        const float ConeHalfAngleRad = FMath::DegreesToRadians(CurrentSpreadDeg);
+        ShotDir = FMath::VRandCone(ShotDir, ConeHalfAngleRad);
+    }
 
-	// 2) 총구에서 AimPoint 방향으로 실제 발사
-	const FVector MuzzleLoc = GetMuzzleLocation();
-	FVector ShotDir = (AimPoint - MuzzleLoc).GetSafeNormal();
+    const FVector ShotEnd = MuzzleLoc + (ShotDir * TraceDistance);
 
-	//스프레드 적용 완전 랜덤이 아니라 현재 스프레드만큼만 퍼지게
-	if (CurrentSpreadDeg > KINDA_SMALL_NUMBER)
-	{
-		const float ConeHalfAngleRad = FMath::DegreesToRadians(CurrentSpreadDeg);
-		ShotDir = FMath::VRandCone(ShotDir, ConeHalfAngleRad);
-	}
+    FHitResult ShotHit;
+    FCollisionQueryParams ShotParams(SCENE_QUERY_STAT(ShotTrace), true);
+    ShotParams.AddIgnoredActor(this);
+    ShotParams.AddIgnoredActor(GetOwner());
+    ShotParams.bReturnPhysicalMaterial = true;
+    ShotParams.bTraceComplex = true;
 
-	const FVector ShotEnd = MuzzleLoc + (ShotDir * TraceDistance);
+    const bool bShotHit = GetWorld()->LineTraceSingleByChannel(
+        ShotHit, MuzzleLoc, ShotEnd, ECC_Visibility, ShotParams);
 
-	FHitResult ShotHit;
-	FCollisionQueryParams ShotParams(SCENE_QUERY_STAT(ShotTrace), true);
-	ShotParams.AddIgnoredActor(this);
-	ShotParams.AddIgnoredActor(GetOwner());
-	ShotParams.bReturnPhysicalMaterial = true;
-	ShotParams.bTraceComplex = true;
+    if (BulletTraceClass)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride =
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	const bool bShotHit = GetWorld()->LineTraceSingleByChannel(
-		ShotHit, MuzzleLoc, ShotEnd, ECC_Visibility, ShotParams);
+        FVector EndPoint = bShotHit ? ShotHit.ImpactPoint : ShotEnd;
+        FRotator TraceRot = (EndPoint - MuzzleLoc).Rotation();
 
-	UE_LOG(LogTemp, Warning, TEXT("[Fire] bShotHit=%d"), bShotHit ? 1 : 0);
-	if (bShotHit && ShotHit.GetActor())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Fire] HitActor=%s"), *ShotHit.GetActor()->GetName());
-	}
+        GetWorld()->SpawnActor<AActor>(
+            BulletTraceClass,
+            MuzzleLoc,
+            TraceRot,
+            Params
+        );
+    }
 
-	APawn* InstigatorPawn = GetInstigator();
+    UE_LOG(LogTemp, Warning, TEXT("[Fire] bShotHit=%d"), bShotHit ? 1 : 0);
 
-	UE_LOG(LogTemp, Warning, TEXT("[Fire] Instigator=%s Class=%s"),
-		InstigatorPawn ? *InstigatorPawn->GetName() : TEXT("NULL"),
-		InstigatorPawn ? *InstigatorPawn->GetClass()->GetName() : TEXT("NULL"));
+    if (bShotHit && ShotHit.GetActor())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Fire] HitActor=%s"),
+            *ShotHit.GetActor()->GetName());
+    }
 
-	// 기존 화면 흔들림은 그대로 유지
-	if (AHJ_Player* P = Cast<AHJ_Player>(InstigatorPawn))
-	{
-		P->AddRecoilImpulse();
-		P->PlayFireAnimation();
-	}
-	else
-	{
-	}
+    APawn* InstigatorPawn = GetInstigator();
 
-	//무기에서 컨트롤러 입력으로 추가 적용
-	ApplyRecoil(PC);
+    if (AHJ_Player* P = Cast<AHJ_Player>(InstigatorPawn))
+    {
+        P->AddRecoilImpulse();
+        P->PlayFireAnimation();
+    }
 
-	// Debug (원하면 끄기)
-	if (bDrawDebug)
-	{
-		if (bDrawCameraDebug)
-			DrawDebugLine(GetWorld(), CamLoc, AimPoint, FColor::Red, false, 0.5f);
+    ApplyRecoil(PC);
 
-		if (bDrawMuzzleDebug)
-		{
-			FVector RealEnd = bShotHit ? ShotHit.ImpactPoint : ShotEnd;
-			DrawDebugLine(GetWorld(), MuzzleLoc, RealEnd, FColor::Green, false, 0.5f);
-		}
-	}
+    if (bDrawDebug)
+    {
+        if (bDrawCameraDebug)
+            DrawDebugLine(GetWorld(), CamLoc, AimPoint,
+                FColor::Red, false, 0.5f);
 
-	if (!bShotHit) return;
+        if (bDrawMuzzleDebug)
+        {
+            FVector RealEnd = bShotHit ?
+                ShotHit.ImpactPoint : ShotEnd;
 
-	AActor* HitActor = ShotHit.GetActor();
-	if (!HitActor) return;
+            DrawDebugLine(GetWorld(), MuzzleLoc, RealEnd,
+                FColor::Green, false, 0.5f);
+        }
+    }
 
-	if (HitActor->ActorHasTag(TEXT("Gate")))
-		return;
+    if (!bShotHit) return;
 
-	// 4) 데미지가 0이면 종료
-	if (CurrentDamage <= 0.f)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Weapon] CurrentDamage is 0. Set it from DT_Weapon in BP."));
-		return;
-	}
+    AActor* HitActor = ShotHit.GetActor();
+    if (!HitActor) return;
 
-	// 5) ApplyPointDamage로 좀비 TakeDamage로 전달
-	AController* InstigatorController = nullptr;
-	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
-		InstigatorController = OwnerPawn->GetController();
+    if (HitActor->ActorHasTag(TEXT("Gate")))
+        return;
 
-	UGameplayStatics::ApplyPointDamage(
-		HitActor,
-		CurrentDamage,
-		ShotDir,
-		ShotHit,
-		InstigatorController,
-		this,
-		UDamageType::StaticClass()
-	);
+    if (CurrentDamage <= 0.f)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("[Weapon] CurrentDamage is 0."));
+        return;
+    }
 
-	UE_LOG(LogTemp, Warning, TEXT("[Fire] Magazine=%d / Reserve=%d"),
-		CurrentMagazineAmmo, CurrentAmmo);
+    AController* InstigatorController = nullptr;
+    if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
+        InstigatorController = OwnerPawn->GetController();
+
+    UGameplayStatics::ApplyPointDamage(
+        HitActor,
+        CurrentDamage,
+        ShotDir,
+        ShotHit,
+        InstigatorController,
+        this,
+        UDamageType::StaticClass()
+    );
+
+    UE_LOG(LogTemp, Warning, TEXT("[Fire] Magazine=%d / Reserve=%d"),
+        CurrentMagazineAmmo, CurrentAmmo);
 }
 
 void AEquipWeaponMaster::StartFire()
