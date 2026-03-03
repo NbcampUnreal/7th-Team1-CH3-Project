@@ -17,21 +17,23 @@ AEquipWeaponMaster::AEquipWeaponMaster()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root")); 
 	RootComponent = Root;
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+	WeaponMesh->SetupAttachment(RootComponent);
 
+	// 총구 위치용 Arrow
 	Muzzle = CreateDefaultSubobject<UArrowComponent>(TEXT("Muzzle"));
-	Muzzle->SetupAttachment(RootComponent);
+	Muzzle->SetupAttachment(WeaponMesh);
 
-	//탄약 초기화(탄창 45발)
+	// 탄약 초기화
 	MaxAmmoInMag = 45;
 	CurrentAmmoInMag = MaxAmmoInMag;
 
-	//반동 패턴
 	if (RecoilPattern.Num() == 0)
 	{
 		RecoilPattern = {
-			{0.18f, -0.05f}, 
+			{0.18f, -0.05f},
 			{0.19f,  0.04f},
 			{0.20f, -0.06f},
 			{0.21f,  0.05f},
@@ -257,12 +259,11 @@ void AEquipWeaponMaster::Fire()
 	// 기존 화면 흔들림은 그대로 유지
 	if (AHJ_Player* P = Cast<AHJ_Player>(InstigatorPawn))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Fire] Cast to AHJ_Player SUCCESS (Instigator)"));
 		P->AddRecoilImpulse();
+		P->PlayFireAnimation();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Fire] Cast to AHJ_Player FAILED (Instigator)"));
 	}
 
 	//무기에서 컨트롤러 입력으로 추가 적용
