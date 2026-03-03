@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -88,6 +88,10 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Enemy|Horde")
 	TObjectPtr<AHordeManager> OwnerHorde = nullptr;
+
+	//관문전담 좀비들
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	bool bGateRunner = false;
 
 
 	// Gate Slot

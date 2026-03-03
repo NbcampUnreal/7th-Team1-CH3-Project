@@ -1,4 +1,4 @@
-﻿#include "AI/AiEnemyController.h"
+#include "AI/AiEnemyController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/AiEnemyCharacter.h"               
 #include "Gate.h"                         
@@ -38,6 +38,14 @@ void AAiEnemyController::OnPossess(APawn* InPawn)
 
 	FindTargets();
 
+	//좀비중 일부 게이트 전담
+	if (MyZombie && !MyZombie->bIsLeader)
+	{
+		//25%sms 관문 전담
+		MyZombie->bGateRunner = (FMath::FRand() < 0.25f);
+	}
+
+
 	// 스폰되자마자 Gate로 이동
 	if (IsValid(TargetGate))
 	{
@@ -70,6 +78,72 @@ void AAiEnemyController::FindTargets()
 	}
 }
 
+//스폰위치 계산
+FVector AAiEnemyController::GetRingOffsetAround(const FVector& Center, int32 Slot, int32 Slots, float Radius) const
+{
+	if (Slots <= 0) return FVector::ZeroVector;
+
+	const float T = float(Slot) / float(Slots);
+	const float Angle = 2.0f * PI * T;
+	//평면에서 원형 배치
+	return FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * Radius;
+}
+
+//안정적으로 배치
+int32 AAiEnemyController::GetStableSlot(int32 Slots) const
+{
+	if (Slots <= 0) return 0;
+	return int32(GetUniqueID() % Slots);
+}
+
+//리더 주변 원형 자리로 MoveToLocation을 걸어 분산시킴.
+void AAiEnemyController::MoveAsFollowerFormation()
+{
+	if (!MyZombie || MyZombie->bIsDead) return;
+	if (!IsValid(MyZombie->Leader)) return;
+
+	const FVector LeaderLoc = MyZombie->Leader->GetActorLocation();
+	const int32 Slot = GetStableSlot(FollowerRingSlots);
+	const FVector Goal = LeaderLoc + GetRingOffsetAround(LeaderLoc, Slot, FollowerRingSlots, FollowerRingRadius);
+
+	// 분산 목표점으로 이동
+	MoveToLocation(
+		Goal,
+		FormationAcceptanceRadius, 
+		false,                    
+		true,                      
+		true,                     
+		false,                     
+		nullptr,                  
+		true                       
+	);
+}
+
+
+//플레이어 주변 포위
+void AAiEnemyController::MoveToPlayerSurround()
+{
+	if (!MyZombie || MyZombie->bIsDead) return;
+	if (!IsValid(TargetPlayer)) return;
+
+	const FVector PlayerLoc = TargetPlayer->GetActorLocation();
+
+	const int32 Slot = GetStableSlot(PlayerSurroundSlots);
+	const FVector Goal = PlayerLoc + GetRingOffsetAround(PlayerLoc, Slot, PlayerSurroundSlots, PlayerSurroundRadius);
+
+	MoveToLocation(
+		Goal,
+		FormationAcceptanceRadius,
+		false,
+		true,
+		true,
+		false,
+		nullptr,
+		true
+	);
+}
+
+
 void AAiEnemyController::UpdateAI()
 {
 	// 예외처리
@@ -84,14 +158,23 @@ void AAiEnemyController::UpdateAI()
 		return;
 	}
 
-	
-	// 팔로워는 리더만 따라감 (최적화)
-	if (!MyZombie->bIsLeader && IsValid(MyZombie->Leader))
+	if (!MyZombie->bIsLeader)
 	{
-		MoveToActor(MyZombie->Leader, 120.f);
-		return;
-	}
+		//관문 전담
+		if (MyZombie->bGateRunner && IsValid(TargetGate))
+		{
+			CurrentState = EAIState::MovingToGate;
+			MoveToGateIfNeeded(CurrentState); // 게이트 계속 압박
+			return;
+		}
 
+		//리더 주변 분산 이동
+		if (IsValid(MyZombie->Leader))
+		{
+			MoveAsFollowerFormation();
+			return;
+		}
+	}
 	
 	// 리더 AI 판단
 
@@ -152,14 +235,30 @@ void AAiEnemyController::UpdateAI()
 		}
 
 		MoveToPlayerIfNeeded(Prev);
-		AttackAccTime = 0.f;
+		AttackAccTime = 0.0f;
 		break;
 
-	case EAIState::AttackingGate:
+	case EAIState::AttackingGate:StopMovement();
+		TickAttack();
+		break;
 	case EAIState::AttackingPlayer:
+	{
+		//공격 상태에서도 거리 벌어지면 다시 포위 위치로 재배치
+		if (IsValid(TargetPlayer))
+		{
+			const float Dist = MyZombie->GetDistanceTo(TargetPlayer);
+			if (Dist > AttackRange * 0.9f)
+			{
+				MoveToPlayerSurround();
+				AttackAccTime = 0.f;
+				break;
+			}
+		}
+
 		StopMovement();
 		TickAttack();
 		break;
+	}
 
 	case EAIState::Stunned:
 	default:
@@ -173,10 +272,10 @@ void AAiEnemyController::MoveToGateIfNeeded(EAIState PrevState)
 {
 	if (!IsValid(TargetGate)) return;
 
-	if (PrevState != EAIState::MovingToGate ||
+	if (PrevState != EAIState::ChasingPlayer ||
 		GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
-		MoveToActor(TargetGate, 50.f);
+		MoveToPlayerSurround();
 	}
 }
 
