@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -9,9 +9,7 @@ class USceneComponent;
 class UArrowComponent;
 class APlayerController;
 class UNiagaraSystem;
-
-
-
+class USkeletalMeshComponent;
 
 //탄이 없을 때 발사 막기
 USTRUCT(BlueprintType)
@@ -50,6 +48,9 @@ public:
 	//사운드
 	UFUNCTION(BlueprintPure, Category = "Weapon|SFX")
 	USoundBase* GetReloadSound() const { return ReloadSound2D; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkeletalMeshComponent* WeaponMesh;
 
 protected:
 	//Tick 에서 반동 복구
@@ -138,6 +139,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Ammo")
 	bool bInfiniteReserveAmmo = true;//예비탄 무한
+
 	
 protected:
 

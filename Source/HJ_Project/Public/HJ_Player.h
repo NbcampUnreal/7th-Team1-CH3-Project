@@ -78,6 +78,11 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* FireMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    UAnimMontage* HitReactionMontage;
+
+    void PlayHitReaction();
     /* ================= Stat ================= */
 
     UPROPERTY(EditAnywhere, Category = "Stat")
@@ -91,6 +96,7 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     bool bIsDead = false;
+
 
     /* ================= Aim ================= */
 
@@ -106,9 +112,11 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Aim")
     float NormalWalkSpeed = 600.f;
 
-    // ✅ 추가된 변수
     UPROPERTY(EditAnywhere, Category = "Aim")
     float AimWalkSpeed = 300.f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AimOffset")
+    float AimPitch = 0.f;
 
     /* ================= Recoil ================= */
 
@@ -123,10 +131,10 @@ protected:
     float RecoilReturnSpeed = 45.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float HipPitchMin = 0.18f;
+    float HipPitchMin = 0.3f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float HipPitchMax = 0.30f;
+    float HipPitchMax = 0.50f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
     float HipYawMin = -0.02f;
@@ -135,27 +143,27 @@ protected:
     float HipYawMax = 0.02f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float ADSPitchMin = 0.10f;
+    float ADSPitchMin = 0.18f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float ADSPitchMax = 0.18f;
+    float ADSPitchMax = 0.30f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float ADSYawMin = -0.01f;
+    float ADSYawMin = -0.03f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float ADSYawMax = 0.01f;
+    float ADSYawMax = 0.03f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float MaxRecoilPitch = 2.0f;
+    float MaxRecoilPitch = 2.5f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Recoil")
-    float MaxRecoilYaw = 0.6f;
+    float MaxRecoilYaw = 1.0f;
 
 public:
     void AddRecoilImpulse();
     void TickRecoil(float DeltaSeconds);
-
+    void PlayFireAnimation();
     /* ================= Camera Position ================= */
 
     UPROPERTY(EditAnywhere, Category = "Camera")
@@ -168,13 +176,19 @@ public:
     FVector NormalSocketOffset = FVector(0.f, 55.f, 70.f);
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    FVector AimSocketOffset = FVector(0.f, 65.f, 90.f);
+    FVector AimSocketOffset = FVector(0.f, 65.f, 72.f);
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float CameraInterpSpeed = 15.f;
     // 장전 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
     bool bIsReloading = false;
+
+    bool bRotateToFireDirection = false;
+    FRotator FireTargetRotation;
+
+    UPROPERTY(EditAnywhere, Category = "Rotation")
+    float FireRotateSpeed = 15.f;
 
     FTimerHandle ReloadTimerHandle;
 };
