@@ -1,4 +1,4 @@
-﻿#include "HJ_Player.h"
+#include "HJ_Player.h"
 #include "HJ_GameMode.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
@@ -318,9 +318,12 @@ void AHJ_Player::ReloadWeapon()
 
     UE_LOG(LogTemp, Warning, TEXT("Reload Start"));
 
-
     SetAimMode(false);
-    GetCharacterMovement()->DisableMovement();
+
+    UCharacterMovementComponent* Move = GetCharacterMovement();
+
+    //공중에서는 DisableMovement 하지 않음
+    const bool bWasFalling = Move && Move->IsFalling();
 
     if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
     {
@@ -330,12 +333,7 @@ void AHJ_Player::ReloadWeapon()
         }
     }
 
-    float ReloadTime = 0.f;
-
-    if (ReloadMontage)
-    {
-        ReloadTime = ReloadMontage->GetPlayLength();
-    }
+    const float ReloadTime = ReloadMontage ? ReloadMontage->GetPlayLength() : 0.f;
 
     GetWorldTimerManager().SetTimer(
         ReloadTimerHandle,
@@ -352,12 +350,25 @@ void AHJ_Player::FinishReload()
 
     if (CurrentWeapon)
     {
-        CurrentWeapon->Reload(); 
+        CurrentWeapon->Reload();
     }
 
     bIsReloading = false;
 
-    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+    UCharacterMovementComponent* Move = GetCharacterMovement();
+
+    //현재 공중이면 Falling 유지, 지상이면 Walking 복구
+    if (Move)
+    {
+        if (Move->IsFalling())
+        {
+            Move->SetMovementMode(EMovementMode::MOVE_Falling);
+        }
+        else
+        {
+            Move->SetMovementMode(EMovementMode::MOVE_Walking);
+        }
+    }
 
     UpDateAmmoHUD();
 }

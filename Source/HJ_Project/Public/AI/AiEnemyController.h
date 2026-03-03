@@ -58,6 +58,24 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Combat")
 	float GateAttackEnterRange = 250.f;
 
+	//팔로워가 리더를 '한 점으로 따라가는것을 방지'
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Crowd")
+	int32 FollowerRingSlots = 8;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Crowd")
+	float FollowerRingRadius = 220.0f;
+
+	//플레이어 둘러싸면서 포위
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Crowd")
+	int32 PlayerSurroundSlots = 10;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Crowd")
+	float PlayerSurroundRadius = 250.0f;
+
+	//길찾을때 허용 반경 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Crowd")
+	float FormationAcceptanceRadius = 60.f;
+
 private:
 	// 내 좀비 캐릭터
 	UPROPERTY()
@@ -84,4 +102,12 @@ private:
 	void MoveToPlayerIfNeeded(EAIState PrevState);
 	void TryEnterGateAttack();
 	void TickAttack(); // 공격 누적 및 ApplyDamage
+	//리더랑 플레이어 주변 원형 좌표계산
+	FVector GetRingOffsetAround(const FVector& Center, int32 Slot, int32 Slots, float Radius) const;
+	//좀비마다 고정 슬롯 부여
+	int32 GetStableSlot(int32 Slots) const;
+	//팔로워가 리더 따라갈대 분산이동
+	void MoveAsFollowerFormation();
+	//플레이어 추격과 공격때 포위
+	void MoveToPlayerSurround();
 };
