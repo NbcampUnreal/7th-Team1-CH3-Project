@@ -52,6 +52,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* WeaponMesh;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|VFX")
+	TSubclassOf<AActor> BulletTraceClass;
+
 protected:
 	//Tick 에서 반동 복구
 	virtual void BeginPlay() override;
