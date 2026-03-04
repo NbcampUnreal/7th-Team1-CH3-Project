@@ -106,14 +106,6 @@ float AAiEnemyCharacter::TakeDamage(
 
     BP_OnDamaged(AppliedDamage, DamageCauser);
     // BP 피격 연출
-    if (HitSound && !bIsDead)
-    {
-        UGameplayStatics::PlaySoundAtLocation(
-            this,
-            HitSound,
-            GetActorLocation()
-        );
-    }
 
 
     //스턴 처리

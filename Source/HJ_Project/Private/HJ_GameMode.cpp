@@ -9,125 +9,121 @@
 
 AHJ_GameMode::AHJ_GameMode()
 {
-    GameStateClass = AHJ_GameState::StaticClass();
-    DefaultPawnClass = AHJ_Player::StaticClass();
-    PlayerControllerClass = AHJ_PlayerController::StaticClass();
+	GameStateClass = AHJ_GameState::StaticClass();
+	DefaultPawnClass = AHJ_Player::StaticClass();
+	PlayerControllerClass = AHJ_PlayerController::StaticClass();
 
-    TimeBetweenWaves = 5.f;
+	TimeBetweenWaves = 5.f;
 }
 
 void AHJ_GameMode::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    TArray<AActor*> FoundActors;
+	// SpawnZombie 자동 수집
+	TArray<AActor*> FoundActors;
 
-    UGameplayStatics::GetAllActorsOfClass(
-        GetWorld(),
-        AHJ_SpawnZombie::StaticClass(),
-        FoundActors
-    );
+	UGameplayStatics::GetAllActorsOfClass(
+		GetWorld(),
+		AHJ_SpawnZombie::StaticClass(),
+		FoundActors
+	);
 
-    SpawnZombieActors.Empty();
+	SpawnZombieActors.Empty();
 
-    for (AActor* Actor : FoundActors)
-    {
-        if (AHJ_SpawnZombie* Spawner = Cast<AHJ_SpawnZombie>(Actor))
-        {
-            SpawnZombieActors.Add(Spawner);
-        }
-    }
+	for (AActor* Actor : FoundActors)
+	{
+		if (AHJ_SpawnZombie* Spawner = Cast<AHJ_SpawnZombie>(Actor))
+		{
+			SpawnZombieActors.Add(Spawner);
+		}
+	}
 
-    StartPreparation();
+	StartPreparation();
 }
 
 void AHJ_GameMode::StartPreparation()
 {
-    AHJ_GameState* GS = GetGameState<AHJ_GameState>();
-    if (!GS) return;
+	AHJ_GameState* GS = GetGameState<AHJ_GameState>();
+	if (!GS) return;
 
-    GS->SetBattleState(EBattleState::Preparation);
+	GS->SetBattleState(EBattleState::Preparation);
 
-    GetWorldTimerManager().SetTimer(
-        WaveTimerHandle,
-        this,
-        &AHJ_GameMode::StartWave,
-        TimeBetweenWaves,
-        false
-    );
+	GetWorldTimerManager().SetTimer(
+		WaveTimerHandle,
+		this,
+		&AHJ_GameMode::StartWave,
+		TimeBetweenWaves,
+		false
+	);
 }
 
 void AHJ_GameMode::StartWave()
 {
-    AHJ_GameState* GS = GetGameState<AHJ_GameState>();
-    if (!GS || !WaveDataTable) return;
+	AHJ_GameState* GS = GetGameState<AHJ_GameState>();
+	if (!GS || !WaveDataTable) return;
 
-    GS->SetBattleState(EBattleState::InBattle);
+	GS->SetBattleState(EBattleState::InBattle);
 
-    CurrentWave++;
-    GS->SetWave(CurrentWave);
+	CurrentWave++;
 
-    FZombieSpawnRow* Row =
-        WaveDataTable->FindRow<FZombieSpawnRow>(
-            FName(*FString::FromInt(CurrentWave)),
-            TEXT("WaveLookup")
-        );
+	// GameState에게 바뀐 웨이브 숫자를 알려주고 UI를 업데이트
+	GS->SetWave(CurrentWave);
 
-    if (!Row)
-    {
-        return;
-    }
+	FZombieSpawnRow* Row =
+		WaveDataTable->FindRow<FZombieSpawnRow>(
+			FName(*FString::FromInt(CurrentWave)),
+			TEXT("WaveLookup")
+		);
 
-    AliveZombieCount = 0;
+	if (!Row)
+	{
+		return;
+	}
+	AliveZombieCount = Row->SpawnCount * SpawnZombieActors.Num();
 
-    for (AHJ_SpawnZombie* Spawner : SpawnZombieActors)
-    {
-        if (Spawner)
-        {
-            Spawner->SpawnWave(CurrentWave);
-        }
-    }
-}
-
-void AHJ_GameMode::RegisterSpawnedZombie()
-{
-    AliveZombieCount++;
+	for (AHJ_SpawnZombie* Spawner : SpawnZombieActors)
+	{
+		if (Spawner)
+		{
+			Spawner->SpawnWave(CurrentWave);
+		}
+	}
 }
 
 void AHJ_GameMode::OnZombieKilled()
 {
-    AliveZombieCount--;
+	AliveZombieCount--;
 
-    UE_LOG(LogTemp, Warning, TEXT("Remaining: %d"), AliveZombieCount);
+	UE_LOG(LogTemp, Warning, TEXT("Remaining: %d"), AliveZombieCount);
 
-    if (AliveZombieCount <= 0)
-    {
-        EndWave();
-    }
+	if (AliveZombieCount <= 0)
+	{
+		EndWave();
+	}
 }
 
 void AHJ_GameMode::EndWave()
 {
-    if (CurrentWave >= MaxWave)
-    {
-        AHJ_GameState* GS = GetGameState<AHJ_GameState>();
-        if (GS)
-        {
-            GS->SetBattleState(EBattleState::Victory);
-        }
+	if (CurrentWave >= MaxWave)
+	{
+		AHJ_GameState* GS = GetGameState<AHJ_GameState>();
+		if (GS)
+		{
+			GS->SetBattleState(EBattleState::Victory);
+		}
 
-        if (AHJ_PlayerController* PC =
-            Cast<AHJ_PlayerController>(GetWorld()->GetFirstPlayerController()))
-        {
-            PC->ShowMainMenu(true);
-        }
+		if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(GetWorld()->GetFirstPlayerController()))
+		{
+			PC->ShowMainMenu(true);
+		}
+		UGameplayStatics::SetGamePaused(this, true);
 
-        UGameplayStatics::SetGamePaused(this, true);
-        BP_OnVictory();
-        return;
-    }
+		BP_OnVictory();
+		return;
+	}
 
-    StartPreparation();
+	StartPreparation();
 }
 
 void AHJ_GameMode::HandleDefeat()
@@ -143,11 +139,10 @@ void AHJ_GameMode::HandleDefeat()
 
     UGameplayStatics::SetGamePaused(this, true);
 
-    if (AHJ_PlayerController* PC =
-        Cast<AHJ_PlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
+    if (AHJ_PlayerController* PC = Cast<AHJ_PlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
     {
         PC->ShowMainMenu(true);
     }
-
+    
     BP_OnDefeat();
 }

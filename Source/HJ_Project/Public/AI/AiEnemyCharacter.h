@@ -137,9 +137,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
 	void Die();
 
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy|SFX")
-	USoundBase* HitSound;
-
 private:
 	FTimerHandle StunTimerHandle;
 
