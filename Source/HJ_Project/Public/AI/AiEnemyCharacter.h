@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -136,6 +136,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
 	void Die();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|SFX")
+	USoundBase* HitSound;
 
 private:
 	FTimerHandle StunTimerHandle;
