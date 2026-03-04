@@ -193,6 +193,19 @@ void AAiEnemyController::UpdateAI()
 	//가까우면 공격
 	if (!MyZombie->bIsLeader && IsValid(MyZombie->Leader))
 	{
+		//게이트 근처면 팔로워도 관문 공격
+		if (bGateValid && DistToGate <= GateAttackEnterRange)
+		{
+			TryEnterGateAttack();
+			if (CurrentState == EAIState::AttackingGate)
+			{
+				StopMovement();
+				TickAttack();
+				return;
+			}
+			// 슬롯이 꽉 차서 실패한 경우는 아래 로직(플레이어/리더)로 흘려도 됨
+		}
+
 		// 가까우면 공격
 		if (bPlayerValid && DistToPlayer <= AttackRange)
 		{
