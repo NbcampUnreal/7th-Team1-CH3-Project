@@ -54,7 +54,7 @@ public:
 	
 	//이동 속도 조절
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Move")
-	float MoveSpeed = 150.0f;
+	float MoveSpeed = 200.0f;
 
 	//--------------------
 	//헤드샷 == 즉사
