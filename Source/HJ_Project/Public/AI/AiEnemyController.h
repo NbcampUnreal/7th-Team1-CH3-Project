@@ -34,6 +34,17 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Sense")
+	float LoseSightDelay = 1.5f;//플레이어 놓친 뒤 게이트로 복귀
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Sense")
+	float ChaseDropRange = 1800.0f;//이 거리 밖이면 추격 포기
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Sense")
+	float MaxChaseFromGate = 2500.0f;
+
+	float LastTimeSeenPlayer = -9999.0f;
+
 	//Tick 대신 일정 간격으로만 AI 판단
 	void UpdateAI();
 

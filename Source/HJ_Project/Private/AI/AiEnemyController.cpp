@@ -10,6 +10,7 @@ AAiEnemyController::AAiEnemyController()
 {
 	bSetControlRotationFromPawnOrientation = true;
 	// 컨트롤러 회전과 캐릭터 방향 동기화
+	LastTimeSeenPlayer = -9999.0f;
 }
 
 void AAiEnemyController::BeginPlay()
@@ -158,26 +159,21 @@ void AAiEnemyController::UpdateAI()
 		return;
 	}
 
+	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+
+	//게이트전담은 무조건 게이트로만
 	if (!MyZombie->bIsLeader)
 	{
-		//관문 전담
 		if (MyZombie->bGateRunner && IsValid(TargetGate))
 		{
+			EAIState Prev = CurrentState;
 			CurrentState = EAIState::MovingToGate;
-			MoveToGateIfNeeded(CurrentState); // 게이트 계속 압박
-			return;
-		}
-
-		//리더 주변 분산 이동
-		if (IsValid(MyZombie->Leader))
-		{
-			MoveAsFollowerFormation();
+			MoveToGateIfNeeded(Prev);
 			return;
 		}
 	}
-	
-	// 리더 AI 판단
 
+	// 공통 타겟/거리 계산(중복 방지)
 	const bool bPlayerValid = IsValid(TargetPlayer);
 	const bool bGateValid = IsValid(TargetGate);
 
@@ -193,15 +189,62 @@ void AAiEnemyController::UpdateAI()
 		DistToGate = MyZombie->GetDistanceTo(TargetGate);
 	}
 
+	//팔로워도 공격/추격 허용
+	//가까우면 공격
+	if (!MyZombie->bIsLeader && IsValid(MyZombie->Leader))
+	{
+		// 가까우면 공격
+		if (bPlayerValid && DistToPlayer <= AttackRange)
+		{
+			CurrentState = EAIState::AttackingPlayer;
+			StopMovement();
+			TickAttack();
+			return;
+		}
+
+		// 일정 거리 내면 추격(또는 포위)
+		if (bPlayerValid && DistToPlayer <= ChaseDropRange)
+		{
+			EAIState Prev = CurrentState;
+			CurrentState = EAIState::ChasingPlayer;
+			MoveToPlayerIfNeeded(Prev);
+			AttackAccTime = 0.0f;
+			return;
+		}
+
+		// 아니면 리더 따라가기
+		MoveAsFollowerFormation();
+		return;
+	}
+
+	// 리더 AI 판단
+	// 최근에 플레이어를 본 시간 갱신 (딱 1번만)
+	if (bPlayerValid && DistToPlayer <= DetectionRange)
+	{
+		LastTimeSeenPlayer = Now;
+	}
+
+	//추격 유지 여부
+	const bool bRecentlySeen =
+		bPlayerValid && ((Now - LastTimeSeenPlayer) <= LoseSightDelay);
+
+	const bool bWithinChaseDrop =
+		bPlayerValid && (DistToPlayer <= ChaseDropRange);
+
+	const bool bTooFarFromGate =
+		bGateValid && (DistToGate > MaxChaseFromGate);
+
+	const bool bShouldChase =
+		bRecentlySeen && bWithinChaseDrop && !bTooFarFromGate;
+
 	EAIState Prev = CurrentState;
 
 	// 상태 결정
-
 	if (bPlayerValid && DistToPlayer <= AttackRange)
 	{
 		CurrentState = EAIState::AttackingPlayer;
 	}
-	else if (bPlayerValid && DistToPlayer <= DetectionRange)
+	else if (bShouldChase)
 	{
 		CurrentState = EAIState::ChasingPlayer;
 	}
@@ -214,10 +257,7 @@ void AAiEnemyController::UpdateAI()
 		CurrentState = EAIState::MovingToGate;
 	}
 
-	// ------------------------------
 	// 상태에 따른 행동
-	// ------------------------------
-
 	switch (CurrentState)
 	{
 	case EAIState::MovingToGate:
@@ -238,9 +278,11 @@ void AAiEnemyController::UpdateAI()
 		AttackAccTime = 0.0f;
 		break;
 
-	case EAIState::AttackingGate:StopMovement();
+	case EAIState::AttackingGate:
+		StopMovement();
 		TickAttack();
 		break;
+
 	case EAIState::AttackingPlayer:
 	{
 		//공격 상태에서도 거리 벌어지면 다시 포위 위치로 재배치
@@ -272,10 +314,10 @@ void AAiEnemyController::MoveToGateIfNeeded(EAIState PrevState)
 {
 	if (!IsValid(TargetGate)) return;
 
-	if (PrevState != EAIState::ChasingPlayer ||
+	if (PrevState != EAIState::MovingToGate ||
 		GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
-		MoveToPlayerSurround();
+		MoveToActor(TargetGate, 50.f); 
 	}
 }
 
