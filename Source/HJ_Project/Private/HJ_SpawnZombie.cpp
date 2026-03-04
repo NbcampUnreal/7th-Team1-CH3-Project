@@ -4,6 +4,7 @@
 #include "AI/AiEnemyCharacter.h"
 #include "AI/HordeManager.h"
 #include "Engine/DataTable.h"
+#include "Engine/World.h"
 
 AHJ_SpawnZombie::AHJ_SpawnZombie()
 {
@@ -41,17 +42,28 @@ void AHJ_SpawnZombie::SpawnWave(int32 WaveNumber)
 	{
 		FVector SpawnLoc = GetRandomPointInBox();
 
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 		AActor* Spawned = GetWorld()->SpawnActor<AActor>(
 			Row->ZombieClass,
 			SpawnLoc,
-			FRotator::ZeroRotator
+			FRotator::ZeroRotator,
+			Params
 		);
 
-		if (Spawned && HordeManager)
+		if (Spawned)
 		{
-			if (AAiEnemyCharacter* Zombie = Cast<AAiEnemyCharacter>(Spawned))
+			float RandomScale = FMath::FRandRange(1.0f, 1.5f);
+			Spawned->SetActorScale3D(FVector(RandomScale));
+
+			if (HordeManager)
 			{
-				HordeManager->RegisterZombie(Zombie);
+				if (AAiEnemyCharacter* Zombie = Cast<AAiEnemyCharacter>(Spawned))
+				{
+					HordeManager->RegisterZombie(Zombie);
+				}
 			}
 		}
 	}
