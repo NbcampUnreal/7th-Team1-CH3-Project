@@ -306,6 +306,18 @@ void AHJ_PlayerController::ShowMainMenu(bool bIsRestart)
                 }
             }
         }
+
+        if (UWidget* TTTextWidget = MainMenuWidgetInstance->GetWidgetFromName(TEXT("TT_Text")))
+        {
+            if (bIsRestart)
+            {
+                TTTextWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+            else
+            {
+                TTTextWidget->SetVisibility(ESlateVisibility::Visible);
+            }
+        }
     }
 }
 
