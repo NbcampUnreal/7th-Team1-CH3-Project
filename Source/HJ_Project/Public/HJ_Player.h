@@ -82,6 +82,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Animation")
     UAnimMontage* HitReactionMontage;
 
+    UPROPERTY(EditDefaultsOnly, Category = "SFX")
+    USoundBase* HitReactionSound;
+
     void PlayHitReaction();
     /* ================= Stat ================= */
 

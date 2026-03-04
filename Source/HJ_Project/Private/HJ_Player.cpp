@@ -1,4 +1,4 @@
-#include "HJ_Player.h"
+﻿#include "HJ_Player.h"
 #include "HJ_GameMode.h"
 #include "Camera/CameraComponent.h"
 #include "EquipWeaponMaster.h"
@@ -292,6 +292,11 @@ float AHJ_Player::TakeDamage(
     if (AppliedDamage > 0.f && CurrentHP > 0.f)
     {
         PlayHitReaction();
+
+        if (HitReactionSound)
+        {
+            UGameplayStatics::PlaySound2D(this, HitReactionSound);
+        }
     }
 
     if (CurrentHP <= 0.f)
@@ -396,15 +401,16 @@ void AHJ_Player::UpDateAmmoHUD()
 
 void AHJ_Player::PlayHitReaction()
 {
-    if (bIsDead) return;
-    if (bIsReloading) return;   // 장전 중이면 막고 싶으면 유지
+    if (!HitReactionMontage || !GetMesh())
+        return;
 
-    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+    UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+    if (!AnimInst)
+        return;
+
+    if (!AnimInst->Montage_IsPlaying(HitReactionMontage))
     {
-        if (HitReactionMontage)
-        {
-            Anim->Montage_Play(HitReactionMontage);
-        }
+        AnimInst->Montage_Play(HitReactionMontage);
     }
 }
 
