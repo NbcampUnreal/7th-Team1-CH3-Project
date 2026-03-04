@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -54,7 +54,7 @@ public:
 	
 	//이동 속도 조절
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Move")
-	float MoveSpeed = 250.0f;
+	float MoveSpeed = 150.0f;
 
 	//--------------------
 	//헤드샷 == 즉사
