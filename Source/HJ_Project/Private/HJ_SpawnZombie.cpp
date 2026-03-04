@@ -4,66 +4,77 @@
 #include "AI/AiEnemyCharacter.h"
 #include "AI/HordeManager.h"
 #include "Engine/DataTable.h"
+#include "HJ_GameMode.h"
 
 AHJ_SpawnZombie::AHJ_SpawnZombie()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 
-	SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
-	RootComponent = SpawnBox;
+    SpawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnBox"));
+    RootComponent = SpawnBox;
 }
 
 void AHJ_SpawnZombie::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 FZombieSpawnRow* AHJ_SpawnZombie::FindWave(int32 WaveNumber)
 {
-	if (!WaveDataTable) return nullptr;
+    if (!WaveDataTable) return nullptr;
 
-	FName RowName = FName(*FString::FromInt(WaveNumber));
+    FName RowName = FName(*FString::FromInt(WaveNumber));
 
-	return WaveDataTable->FindRow<FZombieSpawnRow>(
-		RowName,
-		TEXT("WaveLookup")
-	);
+    return WaveDataTable->FindRow<FZombieSpawnRow>(
+        RowName,
+        TEXT("WaveLookup")
+    );
 }
 
 void AHJ_SpawnZombie::SpawnWave(int32 WaveNumber)
 {
-	if (!GetWorld()) return;
+    if (!GetWorld()) return;
 
-	FZombieSpawnRow* Row = FindWave(WaveNumber);
-	if (!Row || !Row->ZombieClass) return;
+    FZombieSpawnRow* Row = FindWave(WaveNumber);
+    if (!Row || !Row->ZombieClass) return;
 
-	for (int32 i = 0; i < Row->SpawnCount; i++)
-	{
-		FVector SpawnLoc = GetRandomPointInBox();
+    for (int32 i = 0; i < Row->SpawnCount; i++)
+    {
+        FVector SpawnLoc = GetRandomPointInBox();
 
-		AActor* Spawned = GetWorld()->SpawnActor<AActor>(
-			Row->ZombieClass,
-			SpawnLoc,
-			FRotator::ZeroRotator
-		);
+        AActor* Spawned = GetWorld()->SpawnActor<AActor>(
+            Row->ZombieClass,
+            SpawnLoc,
+            FRotator::ZeroRotator
+        );
 
-		if (Spawned && HordeManager)
-		{
-			if (AAiEnemyCharacter* Zombie = Cast<AAiEnemyCharacter>(Spawned))
-			{
-				HordeManager->RegisterZombie(Zombie);
-			}
-		}
-	}
+        if (Spawned)
+        {
+            if (AHJ_GameMode* GM =
+                Cast<AHJ_GameMode>(GetWorld()->GetAuthGameMode()))
+            {
+                GM->RegisterSpawnedZombie();
+            }
+        }
+
+        if (Spawned && HordeManager)
+        {
+            if (AAiEnemyCharacter* Zombie =
+                Cast<AAiEnemyCharacter>(Spawned))
+            {
+                HordeManager->RegisterZombie(Zombie);
+            }
+        }
+    }
 }
 
 FVector AHJ_SpawnZombie::GetRandomPointInBox() const
 {
-	FVector Origin = SpawnBox->GetComponentLocation();
-	FVector Extent = SpawnBox->GetScaledBoxExtent();
+    FVector Origin = SpawnBox->GetComponentLocation();
+    FVector Extent = SpawnBox->GetScaledBoxExtent();
 
-	return UKismetMathLibrary::RandomPointInBoundingBox(
-		Origin,
-		Extent
-	);
+    return UKismetMathLibrary::RandomPointInBoundingBox(
+        Origin,
+        Extent
+    );
 }
